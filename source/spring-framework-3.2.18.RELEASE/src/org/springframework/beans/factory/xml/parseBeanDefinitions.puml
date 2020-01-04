@@ -1,0 +1,57 @@
+@startuml
+
+
+DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: parseBeanDefinitions
+activate DefaultBeanDefinitionDocumentReader
+    DefaultBeanDefinitionDocumentReader -> BeanDefinitionParserDelegate: isDefaultNamespace
+    activate BeanDefinitionParserDelegate
+    DefaultBeanDefinitionDocumentReader <-- BeanDefinitionParserDelegate: 判断是否是默认命名空间
+    deactivate BeanDefinitionParserDelegate
+    DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: parseDefaultElement
+    activate DefaultBeanDefinitionDocumentReader
+        DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: processBeanDefinition
+        activate DefaultBeanDefinitionDocumentReader
+            DefaultBeanDefinitionDocumentReader -> BeanDefinitionParserDelegate: parseBeanDefinitionElement
+            activate BeanDefinitionParserDelegate
+                BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseBeanDefinitionElement
+                activate BeanDefinitionParserDelegate
+                    BeanDefinitionParserDelegate -> Element: getAttribute
+                    activate Element
+                    BeanDefinitionParserDelegate <-- Element: get: id, name
+                    deactivate Element
+
+                    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseBeanDefinitionElement
+                    activate BeanDefinitionParserDelegate
+
+                    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+                    deactivate BeanDefinitionParserDelegate
+
+                    BeanDefinitionParserDelegate -> BeanDefinitionHolder: <create>
+                    activate BeanDefinitionHolder
+                    BeanDefinitionParserDelegate <-- BeanDefinitionHolder:
+                    deactivate BeanDefinitionHolder
+                BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+                deactivate BeanDefinitionParserDelegate
+            DefaultBeanDefinitionDocumentReader <-- BeanDefinitionParserDelegate:
+            deactivate BeanDefinitionParserDelegate
+
+            DefaultBeanDefinitionDocumentReader -> BeanDefinitionParserDelegate:  decorateBeanDefinitionIfRequired
+            activate BeanDefinitionParserDelegate
+
+            DefaultBeanDefinitionDocumentReader <-- BeanDefinitionParserDelegate:
+            deactivate BeanDefinitionParserDelegate
+
+            DefaultBeanDefinitionDocumentReader -> BeanDefinitionReaderUtils: registerBeanDefinition
+            activate BeanDefinitionReaderUtils
+
+            DefaultBeanDefinitionDocumentReader <-- BeanDefinitionReaderUtils: 注册解析的BeanDefinition
+            deactivate BeanDefinitionReaderUtils
+        DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader: 处理bean标签
+        deactivate DefaultBeanDefinitionDocumentReader
+    DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader:
+    deactivate DefaultBeanDefinitionDocumentReader
+DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader: 注册并解析BeanDefinition
+deactivate DefaultBeanDefinitionDocumentReader
+
+
+@enduml

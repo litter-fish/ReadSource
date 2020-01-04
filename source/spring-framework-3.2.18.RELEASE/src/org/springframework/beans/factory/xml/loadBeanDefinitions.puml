@@ -1,0 +1,75 @@
+@startuml
+
+XmlBeanDefinitionReader -> XmlBeanDefinitionReader: loadBeanDefinitions
+
+activate XmlBeanDefinitionReader
+
+    XmlBeanDefinitionReader -> EncodedResource: <create>
+    activate EncodedResource
+    XmlBeanDefinitionReader <-- EncodedResource:
+    deactivate EncodedResource
+    XmlBeanDefinitionReader -> XmlBeanDefinitionReader: loadBeanDefinitions
+    activate XmlBeanDefinitionReader
+        XmlBeanDefinitionReader -> ClassPathResource: getInputStream
+        activate ClassPathResource
+        XmlBeanDefinitionReader <-- ClassPathResource: 返回输入流
+        deactivate ClassPathResource
+        XmlBeanDefinitionReader -> InputSource: <create>
+        activate InputSource
+        XmlBeanDefinitionReader <-- InputSource: 转换为SAX的InputSource对象
+        deactivate InputSource
+        XmlBeanDefinitionReader -> XmlBeanDefinitionReader: doLoadBeanDefinitions
+        activate XmlBeanDefinitionReader
+            XmlBeanDefinitionReader -> XmlBeanDefinitionReader: getValidationModeForResource
+            activate XmlBeanDefinitionReader
+            XmlBeanDefinitionReader <-- XmlBeanDefinitionReader: 获取xml的验证模式
+            deactivate XmlBeanDefinitionReader
+            XmlBeanDefinitionReader -> DefaultDocumentLoader: loadDocument
+            activate DefaultDocumentLoader
+            XmlBeanDefinitionReader <-- DefaultDocumentLoader: 加载xml，并返回document对象
+            deactivate DefaultDocumentLoader
+            XmlBeanDefinitionReader -> XmlBeanDefinitionReader: registerBeanDefinitions
+            activate XmlBeanDefinitionReader
+                XmlBeanDefinitionReader -> XmlBeanDefinitionReader: createBeanDefinitionDocumentReader
+                activate XmlBeanDefinitionReader
+                XmlBeanDefinitionReader <-- XmlBeanDefinitionReader: 创建Document解析器DefaultBeanDefinitionDocumentReader
+                deactivate XmlBeanDefinitionReader
+                XmlBeanDefinitionReader -> DefaultBeanDefinitionDocumentReader: registerBeanDefinitions
+                activate DefaultBeanDefinitionDocumentReader
+                    DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: doRegisterBeanDefinitions
+                    activate DefaultBeanDefinitionDocumentReader
+                        DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: createDelegate
+                        activate DefaultBeanDefinitionDocumentReader
+                        DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader:
+                        deactivate DefaultBeanDefinitionDocumentReader
+                        DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: preProcessXml
+                        activate DefaultBeanDefinitionDocumentReader
+                        DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader:
+                        deactivate DefaultBeanDefinitionDocumentReader
+
+                        DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: parseBeanDefinitions
+                        activate DefaultBeanDefinitionDocumentReader
+                        DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader: 注册并解析BeanDefinition
+                        deactivate DefaultBeanDefinitionDocumentReader
+
+                        DefaultBeanDefinitionDocumentReader -> DefaultBeanDefinitionDocumentReader: postProcessXml
+                        activate DefaultBeanDefinitionDocumentReader
+                        DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader:
+                        deactivate DefaultBeanDefinitionDocumentReader
+
+
+                    DefaultBeanDefinitionDocumentReader <-- DefaultBeanDefinitionDocumentReader:
+                    deactivate DefaultBeanDefinitionDocumentReader
+                XmlBeanDefinitionReader <-- DefaultBeanDefinitionDocumentReader: 加载并注册bean
+                deactivate DefaultBeanDefinitionDocumentReader
+            XmlBeanDefinitionReader <-- XmlBeanDefinitionReader:
+            deactivate XmlBeanDefinitionReader
+        XmlBeanDefinitionReader <-- XmlBeanDefinitionReader:
+        deactivate XmlBeanDefinitionReader
+    XmlBeanDefinitionReader <-- XmlBeanDefinitionReader:
+    deactivate XmlBeanDefinitionReader
+
+XmlBeanDefinitionReader <-- XmlBeanDefinitionReader:
+deactivate XmlBeanDefinitionReader
+
+@enduml

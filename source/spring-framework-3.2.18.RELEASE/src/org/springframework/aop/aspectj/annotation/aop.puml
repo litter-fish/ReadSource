@@ -1,0 +1,8 @@
+@startuml
+getAdvicesAndAdvisorsForBean -> findEligibleAdvisors: findEligibleAdvisors
+
+
+
+getAdvicesAndAdvisorsForBean --> findEligibleAdvisors: findEligibleAdvisors
+
+@enduml

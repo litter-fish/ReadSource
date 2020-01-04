@@ -1,0 +1,163 @@
+@startuml
+
+BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseBeanDefinitionElement
+activate BeanDefinitionParserDelegate
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 1 createBeanDefinition
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> BeanDefinitionReaderUtils: createBeanDefinition
+        activate BeanDefinitionReaderUtils
+            BeanDefinitionReaderUtils -> GenericBeanDefinition: <create>
+            activate GenericBeanDefinition
+            BeanDefinitionReaderUtils <-- GenericBeanDefinition: 返回bean定义
+            deactivate GenericBeanDefinition
+        BeanDefinitionParserDelegate <-- BeanDefinitionReaderUtils:
+        deactivate BeanDefinitionReaderUtils
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 返回bean定义
+    deactivate BeanDefinitionParserDelegate
+
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 2 parseBeanDefinitionAttributes
+    activate BeanDefinitionParserDelegate
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析bean中的各种属性
+    deactivate BeanDefinitionParserDelegate
+
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 3 parseMetaElements
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> BeanMetadataAttribute: <create>
+        activate BeanMetadataAttribute
+        BeanDefinitionParserDelegate <-- BeanMetadataAttribute:
+        deactivate BeanMetadataAttribute
+        BeanDefinitionParserDelegate -> BeanMetadataAttributeAccessor: addMetadataAttribute
+        activate BeanMetadataAttributeAccessor
+        BeanDefinitionParserDelegate <-- BeanMetadataAttributeAccessor:
+        deactivate BeanMetadataAttributeAccessor
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析元数据
+    deactivate BeanDefinitionParserDelegate
+
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 4 parseLookupOverrideSubElements
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> LookupOverride: <create>
+        activate LookupOverride
+        BeanDefinitionParserDelegate <-- LookupOverride:
+        deactivate LookupOverride
+        BeanDefinitionParserDelegate -> MethodOverrides: addOverride
+        activate MethodOverrides
+        BeanDefinitionParserDelegate <-- MethodOverrides: bd.getMethodOverrides().addOverride()
+        deactivate MethodOverrides
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析lookup-method属性
+    deactivate BeanDefinitionParserDelegate
+
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 5 parseReplacedMethodSubElements
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> ReplaceOverride: <create>
+        activate ReplaceOverride
+        BeanDefinitionParserDelegate <-- ReplaceOverride:
+        deactivate ReplaceOverride
+        BeanDefinitionParserDelegate -> MethodOverrides: addOverride
+        activate MethodOverrides
+        BeanDefinitionParserDelegate <-- MethodOverrides: bd.getMethodOverrides().addOverride()
+        deactivate MethodOverrides
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析replaced-method属性
+    deactivate BeanDefinitionParserDelegate
+
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 6 parseConstructorArgElements
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate:
+        activate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertyValue
+            activate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析子元素value
+            deactivate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate -> ConstructorArgumentValues: <create>
+            activate ConstructorArgumentValues
+                ConstructorArgumentValues -> ValueHolder: <create>
+                activate ValueHolder
+                ConstructorArgumentValues <-- ValueHolder:
+                deactivate ValueHolder
+            BeanDefinitionParserDelegate <-- ConstructorArgumentValues: 创建承载value的子元素值的对象ValueHolder
+            deactivate ConstructorArgumentValues
+            BeanDefinitionParserDelegate -> ConstructorArgumentValues: addGenericArgumentValue
+            activate ConstructorArgumentValues
+            BeanDefinitionParserDelegate <-- ConstructorArgumentValues: 添加constructorArgumentValues
+            deactivate ConstructorArgumentValues
+        BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+        deactivate BeanDefinitionParserDelegate
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析构造函数参数
+    deactivate BeanDefinitionParserDelegate
+
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 7 parsePropertyElements
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertyElement
+        activate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertyValue
+            activate BeanDefinitionParserDelegate
+                BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertySubElement
+                activate BeanDefinitionParserDelegate
+                      BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertySubElement
+                      activate BeanDefinitionParserDelegate
+                          BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseBeanDefinitionElement
+                          activate BeanDefinitionParserDelegate
+                          BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 如果是bean节点，递归
+                          deactivate BeanDefinitionParserDelegate
+                      BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+                      deactivate BeanDefinitionParserDelegate
+                BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+                deactivate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+            deactivate BeanDefinitionParserDelegate
+
+            BeanDefinitionParserDelegate -> PropertyValue: <create>
+            activate PropertyValue
+            BeanDefinitionParserDelegate <-- PropertyValue:
+            deactivate PropertyValue
+
+            BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseMetaElements
+            activate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析property子元素的元数据
+            deactivate BeanDefinitionParserDelegate
+
+            BeanDefinitionParserDelegate -> MutablePropertyValues: addPropertyValue
+            activate MutablePropertyValues
+            BeanDefinitionParserDelegate <-- MutablePropertyValues: bean对象中存储property子元素
+            deactivate MutablePropertyValues
+        BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+        deactivate BeanDefinitionParserDelegate
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析property子元素
+    deactivate BeanDefinitionParserDelegate
+
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: 8 parseQualifierElements
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseQualifierElement
+        activate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate -> AutowireCandidateQualifier: <create>
+            activate AutowireCandidateQualifier
+            BeanDefinitionParserDelegate <-- AutowireCandidateQualifier: 返回qualifier实例
+            deactivate AutowireCandidateQualifier
+            BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate:  parseQualifierAttributeTag
+            activate BeanDefinitionParserDelegate
+                BeanDefinitionParserDelegate -> BeanMetadataAttribute: <create>
+                activate BeanMetadataAttribute
+                BeanDefinitionParserDelegate <-- BeanMetadataAttribute:
+                deactivate BeanMetadataAttribute
+                BeanDefinitionParserDelegate -> BeanMetadataAttributeAccessor: addMetadataAttribute
+                activate BeanMetadataAttributeAccessor
+                BeanDefinitionParserDelegate <-- BeanMetadataAttributeAccessor: qualifier实例中设置attribute子标签解析的对象
+                deactivate BeanMetadataAttributeAccessor
+            BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+            deactivate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+        deactivate BeanDefinitionParserDelegate
+
+        BeanDefinitionParserDelegate -> AbstractBeanDefinition: addQualifier
+        activate AbstractBeanDefinition
+        BeanDefinitionParserDelegate <-- AbstractBeanDefinition: 存储qualifier对象
+        deactivate AbstractBeanDefinition
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 解析qualifier子元素
+    deactivate BeanDefinitionParserDelegate
+
+
+
+BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+deactivate BeanDefinitionParserDelegate
+
+
+@enduml
