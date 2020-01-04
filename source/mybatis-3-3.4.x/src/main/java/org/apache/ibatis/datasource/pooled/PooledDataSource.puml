@@ -1,0 +1,80 @@
+@startuml
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+
+skinparam sequence {
+	ArrowColor DeepSkyBlue
+	ActorBorderColor DeepSkyBlue
+	LifeLineBorderColor blue
+	LifeLineBackgroundColor #A9DCDF
+
+	ParticipantBorderColor DeepSkyBlue
+	ParticipantBackgroundColor DodgerBlue
+	ParticipantFontName Impact
+	ParticipantFontSize 17
+	ParticipantFontColor #A9DCDF
+
+	ActorBackgroundColor aqua
+	ActorFontColor DeepSkyBlue
+	ActorFontSize 17
+	ActorFontName Aapex
+}
+actor User
+
+User -> BaseExecutor: getConnection
+activate BaseExecutor
+
+    BaseExecutor -> JdbcTransaction: getConnection
+    activate JdbcTransaction
+
+        JdbcTransaction -> JdbcTransaction: openConnection
+        activate JdbcTransaction
+            JdbcTransaction -> PooledDataSource: getConnection
+            activate PooledDataSource
+                PooledDataSource -> PooledDataSource: popConnection
+                activate PooledDataSource
+                    PooledDataSource -> PooledConnection: <create>
+                    activate PooledConnection
+                        PooledConnection -> Proxy: newProxyInstance
+                        activate Proxy
+                        PooledConnection <-- Proxy: 创建Connection代理类对象
+                        deactivate Proxy
+                    PooledDataSource <-- PooledConnection: 返回PooledConnection实例
+                    deactivate PooledConnection
+
+                    PooledDataSource -> PooledConnection: isValid
+                    activate PooledConnection
+                        PooledConnection -> PooledDataSource: pingConnection
+                        activate PooledDataSource
+                        PooledConnection <-- PooledDataSource: 检测连接是否有效
+                        deactivate PooledDataSource
+                    PooledDataSource <-- PooledConnection: 连接是否有效标识
+                    deactivate PooledConnection
+                PooledDataSource <-- PooledDataSource:
+                deactivate PooledDataSource
+
+                PooledDataSource -> PooledConnection: getProxyConnection
+                activate PooledConnection
+                PooledDataSource <-- PooledConnection: 返回代理连接
+                deactivate PooledConnection
+            JdbcTransaction <-- PooledDataSource: 返回代理连接
+            deactivate PooledDataSource
+            JdbcTransaction -> Connection: setTransactionIsolation
+            activate Connection
+            JdbcTransaction <-- Connection: 设置隔离级别
+            deactivate Connection
+            JdbcTransaction -> JdbcTransaction: setDesiredAutoCommit
+            activate JdbcTransaction
+            JdbcTransaction <-- JdbcTransaction: 设置提交模式
+            deactivate JdbcTransaction
+        JdbcTransaction <-- JdbcTransaction: 获取连接
+        deactivate JdbcTransaction
+
+    BaseExecutor <-- JdbcTransaction: 通过jdbc获取数据库连接
+    deactivate JdbcTransaction
+
+User <-- BaseExecutor: 返回数据库连接
+deactivate BaseExecutor
+
+
+@enduml

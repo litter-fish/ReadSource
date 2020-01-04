@@ -1,0 +1,70 @@
+@startuml
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+
+skinparam sequence {
+	ArrowColor DeepSkyBlue
+	ActorBorderColor DeepSkyBlue
+	LifeLineBorderColor blue
+	LifeLineBackgroundColor #A9DCDF
+
+	ParticipantBorderColor DeepSkyBlue
+	ParticipantBackgroundColor DodgerBlue
+	ParticipantFontName Impact
+	ParticipantFontSize 17
+	ParticipantFontColor #A9DCDF
+
+	ActorBackgroundColor aqua
+	ActorFontColor DeepSkyBlue
+	ActorFontSize 17
+	ActorFontName Aapex
+}
+actor User
+
+User -> BaseExecutor: getConnection
+activate BaseExecutor
+
+    BaseExecutor -> JdbcTransaction: getConnection
+    activate JdbcTransaction
+
+        JdbcTransaction -> JdbcTransaction: openConnection
+        activate JdbcTransaction
+            JdbcTransaction -> UnpooledDataSource: getConnection
+            activate UnpooledDataSource
+                UnpooledDataSource -> UnpooledDataSource: doGetConnection
+                activate UnpooledDataSource
+                    UnpooledDataSource -> UnpooledDataSource: initializeDriver
+                    activate UnpooledDataSource
+                    UnpooledDataSource <-- UnpooledDataSource: 初始化数据库驱动
+                    deactivate UnpooledDataSource
+                    UnpooledDataSource -> DriverManager: getConnection
+                    activate DriverManager
+                    UnpooledDataSource <-- DriverManager:
+                    deactivate DriverManager
+                    UnpooledDataSource -> UnpooledDataSource: configureConnection
+                    activate UnpooledDataSource
+                    UnpooledDataSource <-- UnpooledDataSource: 配置自动提交、事务等级
+                    deactivate UnpooledDataSource
+                UnpooledDataSource <-- UnpooledDataSource:
+                deactivate UnpooledDataSource
+            JdbcTransaction <-- UnpooledDataSource:
+            deactivate UnpooledDataSource
+            JdbcTransaction -> Connection: setTransactionIsolation
+            activate Connection
+            JdbcTransaction <-- Connection: 设置隔离级别
+            deactivate Connection
+            JdbcTransaction -> JdbcTransaction: setDesiredAutoCommit
+            activate JdbcTransaction
+            JdbcTransaction <-- JdbcTransaction: 设置提交模式
+            deactivate JdbcTransaction
+        JdbcTransaction <-- JdbcTransaction: 获取连接
+        deactivate JdbcTransaction
+
+    BaseExecutor <-- JdbcTransaction: 通过jdbc获取数据库连接
+    deactivate JdbcTransaction
+
+User <-- BaseExecutor: 返回数据库连接
+deactivate BaseExecutor
+
+
+@enduml

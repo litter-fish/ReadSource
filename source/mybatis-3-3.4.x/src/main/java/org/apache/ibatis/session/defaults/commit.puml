@@ -1,0 +1,73 @@
+@startuml
+actor commit
+commit -> DefaultSqlSession: commit
+activate DefaultSqlSession
+
+    DefaultSqlSession -> CachingExecutor: commit
+    activate CachingExecutor
+
+        CachingExecutor -> BaseExecutor: commit
+        activate BaseExecutor
+            BaseExecutor -> BaseExecutor: clearLocalCache
+            activate BaseExecutor
+            BaseExecutor <-- BaseExecutor: 清除本地缓存
+            deactivate BaseExecutor
+
+            BaseExecutor -> BaseExecutor: flushStatements
+            activate BaseExecutor
+                BaseExecutor -> BaseExecutor: flushStatements
+                activate BaseExecutor
+                      BaseExecutor -> ReuseExecutor: doFlushStatements
+                      activate ReuseExecutor
+                        ReuseExecutor -> BaseExecutor: closeStatement
+                        activate BaseExecutor
+                        ReuseExecutor <-- BaseExecutor: 关闭Statement
+                        deactivate BaseExecutor
+                      BaseExecutor <-- ReuseExecutor:
+                      deactivate ReuseExecutor
+                BaseExecutor <-- BaseExecutor:
+                deactivate BaseExecutor
+            BaseExecutor <-- BaseExecutor: 刷新Statements
+            deactivate BaseExecutor
+
+            BaseExecutor -> JdbcTransaction: commit
+            activate JdbcTransaction
+            BaseExecutor <-- JdbcTransaction: 调用底层API提交
+            deactivate JdbcTransaction
+
+        CachingExecutor <-- BaseExecutor: 清除一级缓存，执行缓存的SQL
+        deactivate BaseExecutor
+
+        CachingExecutor -> TransactionalCacheManager: commit
+        activate TransactionalCacheManager
+            TransactionalCacheManager -> TransactionalCache: commit
+            activate TransactionalCache
+                TransactionalCache -> PerpetualCache: commit
+                activate PerpetualCache
+                TransactionalCache <-- PerpetualCache: 清空HashMap缓存
+                deactivate PerpetualCache
+            TransactionalCacheManager <-- TransactionalCache:
+            deactivate TransactionalCache
+
+            TransactionalCacheManager -> TransactionalCacheManager: flushPendingEntries
+            activate TransactionalCacheManager
+                TransactionalCacheManager -> PerpetualCache: putObject
+                activate PerpetualCache
+                TransactionalCacheManager <-- PerpetualCache: 存储键值对到 HashMap
+                deactivate PerpetualCache
+            TransactionalCacheManager <-- TransactionalCacheManager: 刷新未缓存的结果到 delegate 缓存中
+            deactivate TransactionalCacheManager
+
+             TransactionalCacheManager -> TransactionalCacheManager: reset
+             activate TransactionalCacheManager
+             TransactionalCacheManager <-- TransactionalCacheManager: 重置entriesToAddOnCommit、entriesMissedInCache
+             deactivate TransactionalCacheManager
+        CachingExecutor <-- TransactionalCacheManager: 调用事务缓存管理器提交二级缓存
+        deactivate TransactionalCacheManager
+
+    DefaultSqlSession <-- CachingExecutor:
+    deactivate CachingExecutor
+
+commit <-- DefaultSqlSession:
+deactivate DefaultSqlSession
+@enduml

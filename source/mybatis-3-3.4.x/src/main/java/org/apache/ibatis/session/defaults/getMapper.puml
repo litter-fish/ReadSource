@@ -1,0 +1,37 @@
+@startuml
+
+DefaultSqlSession -> DefaultSqlSession: getMapper
+activate DefaultSqlSession
+
+DefaultSqlSession -> Configuration: getMapper
+activate Configuration
+
+Configuration -> MapperRegistry: getMapper
+activate MapperRegistry
+
+MapperRegistry -> MapperProxyFactory: newInstance(sqlSession)
+activate MapperProxyFactory
+
+MapperProxyFactory -> MapperProxy: new MapperProxy
+activate MapperProxy
+MapperProxyFactory <-- MapperProxy: mapperProxy
+deactivate MapperProxy
+MapperProxyFactory -> MapperProxyFactory: newInstance(mapperProxy)
+activate MapperProxyFactory
+MapperProxyFactory -> Proxy: newProxyInstance
+activate Proxy
+MapperProxyFactory <-- Proxy: 返回代理类
+deactivate Proxy
+deactivate MapperProxyFactory
+
+MapperRegistry <-- MapperProxyFactory: 返回代理类
+deactivate MapperProxyFactory
+
+Configuration <-- MapperRegistry: 返回代理类
+deactivate MapperRegistry
+
+
+DefaultSqlSession <-- Configuration: 返回代理类
+deactivate Configuration
+
+@enduml

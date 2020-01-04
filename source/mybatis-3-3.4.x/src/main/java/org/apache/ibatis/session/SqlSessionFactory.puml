@@ -1,0 +1,31 @@
+@startuml
+actor build
+build -> SqlSessionFactoryBuilder: build
+activate SqlSessionFactoryBuilder
+
+    SqlSessionFactoryBuilder -> XMLConfigBuilder: <create>
+    activate XMLConfigBuilder
+    SqlSessionFactoryBuilder <-- XMLConfigBuilder:
+    deactivate XMLConfigBuilder
+
+    SqlSessionFactoryBuilder -> SqlSessionFactoryBuilder: build
+    activate SqlSessionFactoryBuilder
+        SqlSessionFactoryBuilder -> XMLConfigBuilder: parse
+        activate XMLConfigBuilder
+        SqlSessionFactoryBuilder <-- XMLConfigBuilder: 委托XMLConfigBuilder解析配置文件
+        deactivate XMLConfigBuilder
+    SqlSessionFactoryBuilder <-- SqlSessionFactoryBuilder:
+    deactivate SqlSessionFactoryBuilder
+
+build <-- SqlSessionFactoryBuilder: 返回 Configuration 实例
+deactivate SqlSessionFactoryBuilder
+
+build -> SqlSessionFactoryBuilder: build(Configuration)
+activate SqlSessionFactoryBuilder
+    SqlSessionFactoryBuilder -> DefaultSqlSessionFactory: <create>
+    activate DefaultSqlSessionFactory
+    SqlSessionFactoryBuilder <-- DefaultSqlSessionFactory:  返回DefaultSqlSessionFactory实例
+    deactivate DefaultSqlSessionFactory
+build <-- SqlSessionFactoryBuilder: 返回SqlSessionFactory
+deactivate SqlSessionFactoryBuilder
+@enduml

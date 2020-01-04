@@ -1,0 +1,148 @@
+@startuml
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+
+skinparam sequence {
+	ArrowColor DeepSkyBlue
+	ActorBorderColor DeepSkyBlue
+	LifeLineBorderColor blue
+	LifeLineBackgroundColor #A9DCDF
+
+	ParticipantBorderColor DeepSkyBlue
+	ParticipantBackgroundColor DodgerBlue
+	ParticipantFontName Impact
+	ParticipantFontSize 17
+	ParticipantFontColor #A9DCDF
+
+	ActorBackgroundColor aqua
+	ActorFontColor DeepSkyBlue
+	ActorFontSize 17
+	ActorFontName Aapex
+}
+actor User
+note right of User #aqua
+	将需要实现延迟加载的数据
+	存入ResultLoaderMap集合中
+	，并创建代理
+end note
+
+User -> DefaultResultSetHandler: 1. 创建代理
+activate DefaultResultSetHandler
+
+    DefaultResultSetHandler ->  Configuration: <create>
+    activate Configuration
+    DefaultResultSetHandler <-- Configuration:
+    deactivate Configuration
+
+    DefaultResultSetHandler -> JavassistProxyFactory: createProxy
+    activate JavassistProxyFactory
+        JavassistProxyFactory -> EnhancedResultObjectProxyImpl: createProxy
+        activate EnhancedResultObjectProxyImpl
+            EnhancedResultObjectProxyImpl -> EnhancedResultObjectProxyImpl: <create>
+            activate EnhancedResultObjectProxyImpl
+            EnhancedResultObjectProxyImpl <-- EnhancedResultObjectProxyImpl:
+            deactivate EnhancedResultObjectProxyImpl
+            EnhancedResultObjectProxyImpl -> JavassistProxyFactory: createProxy
+            activate JavassistProxyFactory
+                JavassistProxyFactory -> ProxyFactory: <create>
+                activate ProxyFactory
+                JavassistProxyFactory <-- ProxyFactory: 创建ProxyFactory实例
+                deactivate ProxyFactory
+                JavassistProxyFactory -> JavassistProxyFactory: setSuperclass
+                activate JavassistProxyFactory
+                JavassistProxyFactory <-- JavassistProxyFactory: 设置父类
+                deactivate JavassistProxyFactory
+                JavassistProxyFactory -> JavassistProxyFactory: setInterfaces
+                activate JavassistProxyFactory
+                JavassistProxyFactory <-- JavassistProxyFactory: 设置实现WriteReplaceInterface
+                deactivate JavassistProxyFactory
+                JavassistProxyFactory -> ProxyFactory: create
+                activate ProxyFactory
+                JavassistProxyFactory <-- ProxyFactory: 创建代理对象
+                deactivate ProxyFactory
+                JavassistProxyFactory -> ProxyObject: setHandler
+                activate ProxyObject
+                JavassistProxyFactory <-- ProxyObject: 设置拦截处理
+                deactivate ProxyObject
+            EnhancedResultObjectProxyImpl <-- JavassistProxyFactory: 返回代理对象
+            deactivate JavassistProxyFactory
+        JavassistProxyFactory <-- EnhancedResultObjectProxyImpl: 返回代理对象
+        deactivate EnhancedResultObjectProxyImpl
+
+    DefaultResultSetHandler <-- JavassistProxyFactory: 返回代理对象
+    deactivate JavassistProxyFactory
+
+User <-- DefaultResultSetHandler: 返回代理对象
+deactivate DefaultResultSetHandler
+
+User -> Blog: getAuthor
+activate Blog
+    Blog -> EnhancedResultObjectProxyImpl: invoke
+    activate EnhancedResultObjectProxyImpl
+        EnhancedResultObjectProxyImpl -> ResultLoaderMap: load
+        activate ResultLoaderMap
+            ResultLoaderMap -> HashMap: remove
+            activate HashMap
+            ResultLoaderMap <-- HashMap: 删除元素并返回结果
+            deactivate HashMap
+            ResultLoaderMap -> LoadPair: load
+            activate LoadPair
+                LoadPair -> LoadPair: load
+                activate LoadPair
+                    LoadPair -> ResultLoader: <create>
+                    activate ResultLoader
+                    LoadPair <-- ResultLoader:
+                    deactivate ResultLoader
+                    LoadPair -> ResultLoader: loadResult
+                    activate ResultLoader
+                        ResultLoader -> ResultLoader: selectList
+                        activate ResultLoader
+                            ResultLoader -> ResultLoader: newExecutor
+                            activate ResultLoader
+                                ResultLoader -> Environment: getDataSource
+                                activate Environment
+                                ResultLoader <-- Environment:
+                                deactivate Environment
+                                ResultLoader -> Environment: getTransactionFactory
+                                activate Environment
+                                ResultLoader <-- Environment:
+                                deactivate Environment
+                                ResultLoader -> JdbcTransactionFactory: newTransaction
+                                activate JdbcTransactionFactory
+                                ResultLoader <-- JdbcTransactionFactory:
+                                deactivate JdbcTransactionFactory
+                                ResultLoader -> Configuration: newExecutor
+                                activate Configuration
+                                ResultLoader <-- Configuration:
+                                deactivate Configuration
+                                ResultLoader -> Executor: query
+                                activate Executor
+                                ResultLoader <-- Executor: 获取查询结果
+                                deactivate Executor
+                            ResultLoader <-- ResultLoader:
+                            deactivate ResultLoader
+                            ResultLoader -> ResultExtractor: extractObjectFromList
+                            activate ResultExtractor
+                            ResultLoader <-- ResultExtractor:
+                            deactivate ResultExtractor
+                        deactivate ResultLoader
+
+                    LoadPair <-- ResultLoader:
+                    deactivate ResultLoader
+                LoadPair <-- LoadPair:
+                deactivate LoadPair
+            ResultLoaderMap <-- LoadPair:
+            deactivate LoadPair
+
+
+        EnhancedResultObjectProxyImpl <-- ResultLoaderMap:
+        deactivate ResultLoaderMap
+    Blog <-- EnhancedResultObjectProxyImpl: 返回结果
+    deactivate EnhancedResultObjectProxyImpl
+User <-- Blog: 返回结果
+deactivate Blog
+
+
+
+
+@enduml

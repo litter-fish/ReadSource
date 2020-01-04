@@ -1,0 +1,67 @@
+@startuml
+actor rollback
+rollback -> DefaultSqlSession: rollback
+activate DefaultSqlSession
+
+    DefaultSqlSession -> CachingExecutor: rollback
+    activate CachingExecutor
+
+        CachingExecutor -> BaseExecutor: rollback
+        activate BaseExecutor
+            BaseExecutor -> BaseExecutor: clearLocalCache
+            activate BaseExecutor
+            BaseExecutor <-- BaseExecutor: 清除本地缓存
+            deactivate BaseExecutor
+
+            BaseExecutor -> BaseExecutor: flushStatements
+            activate BaseExecutor
+                BaseExecutor -> BaseExecutor: flushStatements
+                activate BaseExecutor
+                      BaseExecutor -> ReuseExecutor: doFlushStatements
+                      activate ReuseExecutor
+                        ReuseExecutor -> BaseExecutor: closeStatement
+                        activate BaseExecutor
+                        ReuseExecutor <-- BaseExecutor: 关闭Statement
+                        deactivate BaseExecutor
+                      BaseExecutor <-- ReuseExecutor:
+                      deactivate ReuseExecutor
+                BaseExecutor <-- BaseExecutor:
+                deactivate BaseExecutor
+            BaseExecutor <-- BaseExecutor: 刷新Statements
+            deactivate BaseExecutor
+
+            BaseExecutor -> JdbcTransaction: rollback
+            activate JdbcTransaction
+            BaseExecutor <-- JdbcTransaction: 调用底层API回滚
+            deactivate JdbcTransaction
+
+        CachingExecutor <-- BaseExecutor: 清空一级缓存，执行事务回滚
+        deactivate BaseExecutor
+
+        CachingExecutor -> TransactionalCacheManager: rollback
+        activate TransactionalCacheManager
+            TransactionalCacheManager -> TransactionalCache: rollback
+            activate TransactionalCache
+                TransactionalCache -> TransactionalCache: unlockMissedEntries
+                activate TransactionalCache
+                    TransactionalCache -> PerpetualCache: removeObject
+                    activate PerpetualCache
+                    TransactionalCache <-- PerpetualCache: 移除缓存项
+                    deactivate PerpetualCache
+                TransactionalCache <-- TransactionalCache:
+                deactivate TransactionalCache
+                TransactionalCache -> TransactionalCache: reset
+                activate TransactionalCache
+                TransactionalCache <-- TransactionalCache: 重置entriesToAddOnCommit、entriesMissedInCache
+                deactivate TransactionalCache
+            TransactionalCacheManager <-- TransactionalCache:
+            deactivate TransactionalCache
+        CachingExecutor <-- TransactionalCacheManager: 调用事务缓存管理器提交二级缓存
+        deactivate TransactionalCacheManager
+
+    DefaultSqlSession <-- CachingExecutor:
+    deactivate CachingExecutor
+
+rollback <-- DefaultSqlSession:
+deactivate DefaultSqlSession
+@enduml

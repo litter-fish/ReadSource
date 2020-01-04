@@ -1,0 +1,105 @@
+@startuml
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+
+skinparam sequence {
+	ArrowColor DeepSkyBlue
+	ActorBorderColor DeepSkyBlue
+	LifeLineBorderColor blue
+	LifeLineBackgroundColor #A9DCDF
+
+	ParticipantBorderColor DeepSkyBlue
+	ParticipantBackgroundColor DodgerBlue
+	ParticipantFontName Impact
+	ParticipantFontSize 17
+	ParticipantFontColor #A9DCDF
+
+	ActorBackgroundColor aqua
+	ActorFontColor DeepSkyBlue
+	ActorFontSize 17
+	ActorFontName Aapex
+}
+actor User
+note right of User #aqua
+	植入插件时，会在创建executor实例时创建代理，
+	即会创建CachingExecutor的代理对象。
+end note
+User -> Configuration: newExecutor
+activate Configuration
+    Configuration -> InterceptorChain: pluginAll
+    activate InterceptorChain
+        InterceptorChain -> MySqlPagingPlugin: plugin
+        activate MySqlPagingPlugin
+            MySqlPagingPlugin -> Plugin: wrap
+            activate Plugin
+                Plugin -> Plugin: getSignatureMap
+                activate Plugin
+                    Plugin -> Class: getAnnotation
+                    activate Class
+                    Plugin <-- Class: 获取Intercepts注解
+                    deactivate Class
+                    Plugin -> Intercepts: value
+                    activate Intercepts
+                    Plugin <-- Intercepts: 获取Intercepts注解的value值
+                    deactivate Intercepts
+                Plugin <-- Plugin: signatureMap
+                deactivate Plugin
+
+                Plugin -> Plugin: getAllInterfaces
+                activate Plugin
+                Plugin <-- Plugin: 获取目标类实现的接口
+                deactivate Plugin
+
+                Plugin -> Proxy: newProxyInstance
+                activate Proxy
+                    Plugin -> Plugin: <create>
+                    activate Plugin
+                    Plugin <-- Plugin:
+                    deactivate Plugin
+                Plugin <-- Proxy: 返回代理对象
+                deactivate Proxy
+
+            MySqlPagingPlugin <-- Plugin:
+            deactivate Plugin
+        InterceptorChain <-- MySqlPagingPlugin:
+        deactivate MySqlPagingPlugin
+    Configuration <-- InterceptorChain:
+    deactivate InterceptorChain
+User <-- Configuration: 植入插件
+deactivate Configuration
+
+User -> DefaultSqlSession: query, update, commit
+note right of User #aqua
+	执行插件逻辑，当调用CachingExecutor中的query, update, commit等方法时，
+	会先执行代理类中的invoke方法，并执行插件逻辑，最后在执行query, update, commit等方法。
+end note
+activate DefaultSqlSession
+    DefaultSqlSession -> CachingExecutorProxy: query, update, commit
+    activate CachingExecutorProxy
+        CachingExecutorProxy -> Plugin: invoke
+        activate Plugin
+            Plugin -> MySqlPagingPlugin: intercept
+            activate MySqlPagingPlugin
+                MySqlPagingPlugin -> MySqlPagingPlugin: limit
+                activate MySqlPagingPlugin
+                MySqlPagingPlugin <-- MySqlPagingPlugin: 实现分页逻辑
+                deactivate MySqlPagingPlugin
+                MySqlPagingPlugin -> Invocation: proceed
+                activate Invocation
+                    Invocation -> CachingExecutor: invoke
+                    activate CachingExecutor
+                    Invocation -> CachingExecutor: query, update, commit
+                    deactivate CachingExecutor
+                MySqlPagingPlugin <-- Invocation: 执行被拦截方法
+                deactivate Invocation
+            Plugin <-- MySqlPagingPlugin:
+            deactivate MySqlPagingPlugin
+        CachingExecutorProxy <-- Plugin:
+        deactivate Plugin
+    DefaultSqlSession <-- CachingExecutorProxy:
+    deactivate CachingExecutorProxy
+User <-- DefaultSqlSession: 执行插件逻辑
+deactivate DefaultSqlSession
+
+
+@enduml

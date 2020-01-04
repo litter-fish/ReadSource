@@ -1,0 +1,50 @@
+@startuml
+
+DefaultSqlSessionFactory -> DefaultSqlSessionFactory: openSession
+activate DefaultSqlSessionFactory
+
+DefaultSqlSessionFactory -> DefaultSqlSessionFactory: openSessionFromDataSource
+activate DefaultSqlSessionFactory
+
+DefaultSqlSessionFactory -> DefaultSqlSessionFactory: getTransactionFactoryFromEnvironment
+activate DefaultSqlSessionFactory
+
+DefaultSqlSessionFactory <-- DefaultSqlSessionFactory: getTransactionFactoryFromEnvironment
+deactivate DefaultSqlSessionFactory
+
+
+DefaultSqlSessionFactory -> JdbcTransactionFactory: newTransaction
+activate JdbcTransactionFactory
+JdbcTransactionFactory -> JdbcTransaction: new JdbcTransaction()
+activate JdbcTransaction
+JdbcTransactionFactory <-- JdbcTransaction: new JdbcTransaction()
+deactivate JdbcTransaction
+DefaultSqlSessionFactory <-- JdbcTransactionFactory: JdbcTransaction
+deactivate JdbcTransactionFactory
+
+DefaultSqlSessionFactory -> Configuration: newExecutor
+activate Configuration
+    Configuration -> ReuseExecutor: new ReuseExecutor
+    activate ReuseExecutor
+    Configuration <-- ReuseExecutor: executor
+    deactivate ReuseExecutor
+    Configuration -> CachingExecutor: new CachingExecutor(executor)
+    activate CachingExecutor
+    Configuration <-- CachingExecutor: executor
+    deactivate CachingExecutor
+    Configuration -> InterceptorChain: pluginAll(executor)
+    activate InterceptorChain
+    Configuration <-- InterceptorChain: executor
+    deactivate InterceptorChain
+DefaultSqlSessionFactory <-- Configuration: executor
+deactivate Configuration
+
+DefaultSqlSessionFactory -> DefaultSqlSession: new DefaultSqlSession(configuration, executor, autoCommit)
+activate DefaultSqlSession
+DefaultSqlSessionFactory <-- DefaultSqlSession: DefaultSqlSession
+deactivate DefaultSqlSession
+
+
+DefaultSqlSessionFactory <-- DefaultSqlSessionFactory: DefaultSqlSession
+deactivate DefaultSqlSessionFactory
+@enduml

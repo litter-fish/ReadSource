@@ -1,0 +1,70 @@
+@startuml
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 1 handleResultSets
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 2 handleResultSet
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 3 handleRowValues
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4 handleRowValuesForNestedResultMap
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4.1 resolveDiscriminatedResultMap
+activate DefaultResultSetHandler
+DefaultResultSetHandler <-- DefaultResultSetHandler: ResultMap
+deactivate DefaultResultSetHandler
+
+loop null != resultMapping.getNestedResultMapId()
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2 getRowValue
+    activate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.1 createResultObject
+    activate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> JavassistProxyFactory: 4.2.1.1 createProxy
+    activate JavassistProxyFactory
+    DefaultResultSetHandler <-- JavassistProxyFactory: createProxy
+    deactivate JavassistProxyFactory
+    deactivate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.2 applyAutomaticMappings
+    activate DefaultResultSetHandler
+    deactivate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.3 applyPropertyMappings
+    activate DefaultResultSetHandler
+    deactivate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.4 applyNestedResultMappings
+    activate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.4.1 getNestedResultMap
+    activate DefaultResultSetHandler
+    deactivate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.4.2 instantiateCollectionPropertyIfAppropriate
+    activate DefaultResultSetHandler
+    deactivate DefaultResultSetHandler
+
+    DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.4.3 getRowValue递归 4.2 步骤
+    activate DefaultResultSetHandler
+    deactivate DefaultResultSetHandler
+end
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: getRowValue
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleRowValuesForNestedResultMap
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleRowValues
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleResultSet
+deactivate DefaultResultSetHandler
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleResultSets
+deactivate DefaultResultSetHandler
+@enduml

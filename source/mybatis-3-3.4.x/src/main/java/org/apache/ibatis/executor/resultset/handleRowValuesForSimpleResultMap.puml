@@ -1,0 +1,58 @@
+@startuml
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 1 handleResultSets
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 2 handleResultSet
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 3 handleRowValues
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4 handleRowValuesForSimpleResultMap
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4.1 resolveDiscriminatedResultMap
+activate DefaultResultSetHandler
+DefaultResultSetHandler <-- DefaultResultSetHandler: ResultMap
+deactivate DefaultResultSetHandler
+
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4.2 getRowValue
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.1 createResultObject
+activate DefaultResultSetHandler
+
+DefaultResultSetHandler -> JavassistProxyFactory: 4.2.1.1 createProxy
+activate JavassistProxyFactory
+DefaultResultSetHandler <-- JavassistProxyFactory: createProxy
+deactivate JavassistProxyFactory
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.2 applyAutomaticMappings
+activate DefaultResultSetHandler
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.3 applyPropertyMappings
+activate DefaultResultSetHandler
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler -> DefaultResultSetHandler: 4.2.4 storeObject
+activate DefaultResultSetHandler
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: getRowValue
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleRowValuesForSimpleResultMap
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleRowValues
+deactivate DefaultResultSetHandler
+
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleResultSet
+deactivate DefaultResultSetHandler
+DefaultResultSetHandler <-- DefaultResultSetHandler: handleResultSets
+deactivate DefaultResultSetHandler
+@enduml

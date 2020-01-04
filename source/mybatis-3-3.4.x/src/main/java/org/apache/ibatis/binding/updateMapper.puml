@@ -1,0 +1,55 @@
+@startuml
+actor update
+update -> MapperProxy: update
+activate MapperProxy
+
+    MapperProxy -> MapperProxy: invoke
+    activate MapperProxy
+
+        MapperProxy -> MapperProxy: cachedMapperMethod
+        activate MapperProxy
+
+        MapperProxy -> MapperMethod: new MapperMethod()
+        activate MapperMethod
+
+            MapperMethod -> SqlCommand: new SqlCommand()
+            activate SqlCommand
+            MapperMethod <-- SqlCommand: SqlCommand
+            deactivate SqlCommand
+
+             MapperMethod -> MethodSignature: new MethodSignature()
+            activate MethodSignature
+            MapperMethod <-- MethodSignature: MethodSignature
+            deactivate MethodSignature
+
+        MapperProxy <-- MapperMethod: mapperMethod
+        deactivate MapperMethod
+
+        MapperProxy <-- MapperProxy: mapperMethod
+        deactivate MapperProxy
+
+        MapperProxy -> MapperMethod: execute
+        activate MapperMethod
+
+        MapperMethod -> DefaultSqlSession: insert、update、delete
+        activate DefaultSqlSession
+
+        MapperMethod <-- DefaultSqlSession: 返回SQL执行结果
+        deactivate DefaultSqlSession
+
+        MapperMethod -> MapperMethod: rowCountResult
+        activate MapperMethod
+        MapperMethod <-- MapperMethod: 返回执行结果影响数量
+        deactivate MapperMethod
+        MapperProxy <-- MapperMethod: 返回执行结果影响数量
+        deactivate MapperMethod
+
+    MapperProxy <-- MapperProxy: 返回执行影响数量
+    deactivate MapperProxy
+update <-- MapperProxy: 返回影响数量
+deactivate MapperProxy
+
+
+
+
+@enduml

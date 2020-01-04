@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement />
+  <nodes>
+    <node x="841.0" y="76.0">org.apache.ibatis.builder.xml.XMLMapperBuilder</node>
+    <node x="471.0" y="76.0">org.apache.ibatis.cache.decorators.LoggingCache</node>
+    <node x="307.0" y="76.0">org.apache.ibatis.cache.impl.PerpetualCache</node>
+    <node x="0.0" y="76.0">org.apache.ibatis.cache.decorators.SynchronizedCache</node>
+    <node x="185.0" y="76.0">org.apache.ibatis.cache.decorators.LruCache</node>
+    <node x="338.5" y="-14.0">org.apache.ibatis.cache.Cache</node>
+    <node x="621.0" y="76.0">org.apache.ibatis.builder.MapperBuilderAssistant</node>
+    <node x="784.28125" y="0.0">org.apache.ibatis.builder.BaseBuilder</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.ibatis.builder.MapperBuilderAssistant" target="org.apache.ibatis.cache.Cache">
+      <point x="-50.0" y="-13.0" />
+      <point x="671.0" y="46.0" />
+      <point x="411.4" y="46.0" />
+      <point x="32.39999999999998" y="13.0" />
+    </edge>
+    <edge source="org.apache.ibatis.builder.xml.XMLMapperBuilder" target="org.apache.ibatis.builder.BaseBuilder">
+      <point x="0.0" y="-13.0" />
+      <point x="920.0" y="56.0" />
+      <point x="876.53125" y="56.0" />
+      <point x="30.75" y="13.0" />
+    </edge>
+    <edge source="org.apache.ibatis.cache.decorators.LruCache" target="org.apache.ibatis.cache.Cache">
+      <point x="0.0" y="-13.0" />
+      <point x="236.0" y="56.0" />
+      <point x="362.8" y="56.0" />
+      <point x="-16.19999999999999" y="13.0" />
+    </edge>
+    <edge source="org.apache.ibatis.cache.decorators.SynchronizedCache" target="org.apache.ibatis.cache.Cache">
+      <point x="0.0" y="-13.0" />
+      <point x="82.5" y="46.0" />
+      <point x="346.6" y="46.0" />
+      <point x="-32.39999999999998" y="13.0" />
+    </edge>
+    <edge source="org.apache.ibatis.cache.decorators.LoggingCache" target="org.apache.ibatis.cache.Cache">
+      <point x="0.0" y="-13.0" />
+      <point x="536.0" y="56.0" />
+      <point x="395.2" y="56.0" />
+      <point x="16.19999999999999" y="13.0" />
+    </edge>
+    <edge source="org.apache.ibatis.cache.impl.PerpetualCache" target="org.apache.ibatis.cache.Cache">
+      <point x="0.0" y="-13.0" />
+      <point x="0.0" y="13.0" />
+    </edge>
+    <edge source="org.apache.ibatis.builder.MapperBuilderAssistant" target="org.apache.ibatis.builder.BaseBuilder">
+      <point x="50.0" y="-13.0" />
+      <point x="771.0" y="56.0" />
+      <point x="815.03125" y="56.0" />
+      <point x="-30.75" y="13.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="499.5" y="51.0" />
+  <SelectedNodes>
+    <node>org.apache.ibatis.cache.Cache</node>
+  </SelectedNodes>
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

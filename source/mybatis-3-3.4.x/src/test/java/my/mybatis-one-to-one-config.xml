@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+    <properties resource="org/apache/ibatis/databases/blog/blog-derby.properties"/>
+
+    <settings>
+        <setting name="logImpl" value="LOG4J" />
+        <!-- 开启延迟加载 -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <!-- 关闭积极的加载策略 -->
+        <setting name="aggressiveLazyLoading" value="false"/>
+        <!-- 延迟加载的触发方法 -->
+        <setting name="lazyLoadTriggerMethods" value="equals,hashCode"/>
+    </settings>
+
+    <typeAliases>
+        <package name="org.apache.ibatis.domain.blog"/>
+    </typeAliases>
+
+    <plugins>
+        <plugin interceptor="my.MySqlPagingPlugin"></plugin>
+    </plugins>
+
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC">
+                <property name="" value=""/>
+            </transactionManager>
+            <dataSource type="POOLED">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <!--<mapper resource="./my/ArticleMapper.xml"></mapper>
+        <mapper resource="./my/AuthorMapper.xml"></mapper>
+        <mapper resource="./my/StudentMapper.xml"></mapper>-->
+        <mapper resource="./my/BlogMapper.xml"></mapper>
+    </mappers>
+</configuration>

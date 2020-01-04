@@ -1,0 +1,126 @@
+@startuml
+actor update
+update -> DefaultSqlSession: update
+activate DefaultSqlSession
+
+    DefaultSqlSession -> Configuration: 1 getMappedStatement
+    activate Configuration
+    DefaultSqlSession <-- Configuration: 根据ID获取MappedStatement
+    deactivate Configuration
+
+    DefaultSqlSession -> CachingExecutor: 2 update
+    activate CachingExecutor
+
+        CachingExecutor -> CachingExecutor: 2.1 flushCacheIfRequired
+        activate CachingExecutor
+            CachingExecutor -> MappedStatement: 2.1.1 getCache
+            activate MappedStatement
+            CachingExecutor <-- MappedStatement: 获取缓存实例
+            deactivate MappedStatement
+            CachingExecutor -> TransactionalCacheManager: 2.1.2 clear(cache)
+            activate TransactionalCacheManager
+                TransactionalCacheManager -> TransactionalCacheManager: 2.1.2.1 getTransactionalCache
+                activate TransactionalCacheManager
+                    TransactionalCacheManager -> TransactionalCache: <create>
+                    activate TransactionalCache
+                    TransactionalCacheManager <-- TransactionalCache: 2.1.2.1.1 txCache
+                    deactivate TransactionalCache
+                TransactionalCacheManager <-- TransactionalCacheManager: 2.1.2.2 返回缓存事务管理器
+                deactivate TransactionalCacheManager
+                TransactionalCacheManager -> TransactionalCache: 2.1.2.3 clear
+                activate TransactionalCache
+                TransactionalCacheManager <-- TransactionalCache: 清除缓存
+                deactivate TransactionalCache
+            CachingExecutor <-- TransactionalCacheManager: 刷新二级缓存如果需要
+            deactivate TransactionalCacheManager
+        deactivate CachingExecutor
+
+        CachingExecutor -> BaseExecutor: 2.2 update
+        activate BaseExecutor
+            BaseExecutor -> BaseExecutor: 2.2.1 clearLocalCache
+            activate BaseExecutor
+            BaseExecutor <-- BaseExecutor: 刷新一级缓存
+            deactivate BaseExecutor
+
+            BaseExecutor -> ReuseExecutor: 2.2.2 doUpdate
+            activate ReuseExecutor
+
+                ReuseExecutor -> Configuration: 2.2.2.1 newStatementHandler
+                activate Configuration
+                    Configuration -> RoutingStatementHandler: 2.2.2.1.1 <create>
+                    activate RoutingStatementHandler
+                    Configuration <-- RoutingStatementHandler: 预编译SQL的处理(PreparedStatementHandler)
+                    deactivate RoutingStatementHandler
+                ReuseExecutor <-- Configuration: StatementHandler
+                deactivate Configuration
+
+                ReuseExecutor -> ReuseExecutor: 2.2.2.2 prepareStatement
+                activate ReuseExecutor
+                    ReuseExecutor -> BaseStatementHandler: 2.2.2.2.1 getBoundSql
+                    activate BaseStatementHandler
+                    ReuseExecutor <-- BaseStatementHandler: 获取sql文本，可能存在?
+                    deactivate BaseStatementHandler
+
+                    ReuseExecutor -> BaseExecutor: 2.2.2.2.2 getConnection
+                    activate BaseExecutor
+                    ReuseExecutor <-- BaseExecutor: 返回数据库连接
+                    deactivate BaseExecutor
+
+                    ReuseExecutor -> BaseStatementHandler: 2.2.2.2.3 prepare
+                    activate BaseStatementHandler
+                        BaseStatementHandler -> PreparedStatementHandler: 2.2.2.2.3.1 instantiateStatement
+                        activate PreparedStatementHandler
+                        BaseStatementHandler <-- PreparedStatementHandler: 获取Statement实例
+                        deactivate PreparedStatementHandler
+                        BaseStatementHandler -> BaseStatementHandler: 2.2.2.2.3.2 setStatementTimeout
+                        activate BaseStatementHandler
+                        BaseStatementHandler <-- BaseStatementHandler: 设置超时时间
+                        deactivate BaseStatementHandler
+                        BaseStatementHandler -> BaseStatementHandler: 2.2.2.2.3.3 setFetchSize
+                        activate BaseStatementHandler
+                        BaseStatementHandler <-- BaseStatementHandler: 设置限制条数
+                        deactivate BaseStatementHandler
+                    ReuseExecutor <-- BaseStatementHandler: Statement
+                    deactivate BaseStatementHandler
+
+
+                    ReuseExecutor -> PreparedStatementHandler: 2.2.2.2.4 parameterize
+                    activate PreparedStatementHandler
+                        PreparedStatementHandler -> DefaultParameterHandler: 2.2.2.2.4.1 setParameters
+                        activate DefaultParameterHandler
+                        PreparedStatementHandler <-- DefaultParameterHandler: 调用PreparedStatement设置参数
+                        deactivate DefaultParameterHandler
+                    ReuseExecutor <-- PreparedStatementHandler:
+                    deactivate PreparedStatementHandler
+                deactivate ReuseExecutor
+
+                ReuseExecutor -> PreparedStatementHandler: 2.2.2.3 update
+                activate PreparedStatementHandler
+                    PreparedStatementHandler -> PreparedStatement: 2.2.2.3.1 execute
+                    activate PreparedStatement
+                    PreparedStatementHandler <-- PreparedStatement: 执行 SQL
+                    deactivate PreparedStatement
+
+                    PreparedStatementHandler -> PreparedStatement: 2.2.2.3.2 getUpdateCount
+                    activate PreparedStatement
+                    PreparedStatementHandler <-- PreparedStatement: 返回受影响行数
+                    deactivate PreparedStatement
+
+                    PreparedStatementHandler -> Jdbc3KeyGenerator: 2.2.2.3.3 processAfter
+                    activate Jdbc3KeyGenerator
+                    PreparedStatementHandler <-- Jdbc3KeyGenerator: 获取自增主键的值，并将值填入到参数对象中
+                    deactivate Jdbc3KeyGenerator
+                ReuseExecutor <-- PreparedStatementHandler: 返回影响行数
+                deactivate PreparedStatementHandler
+
+            BaseExecutor <-- ReuseExecutor: 返回影响行数
+            deactivate ReuseExecutor
+        CachingExecutor <-- BaseExecutor: 返回影响行数
+        deactivate BaseExecutor
+
+    DefaultSqlSession <-- CachingExecutor: 返回影响行数
+    deactivate CachingExecutor
+
+update <-- DefaultSqlSession: 返回影响行数
+deactivate DefaultSqlSession
+@enduml
