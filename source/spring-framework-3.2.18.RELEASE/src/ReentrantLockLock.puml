@@ -1,0 +1,134 @@
+@startuml
+
+ReentrantLock -> ReentrantLock: lock
+activate ReentrantLock
+    ReentrantLock->NonfairSync:lock
+    activate NonfairSync
+        NonfairSync->AbstractQueuedSynchronizer: compareAndSetState
+        activate AbstractQueuedSynchronizer
+        NonfairSync<--AbstractQueuedSynchronizer:
+        deactivate AbstractQueuedSynchronizer
+
+        alt CAS设置成功
+            NonfairSync->AbstractOwnableSynchronizer:setExclusiveOwnerThread
+            activate AbstractOwnableSynchronizer
+            NonfairSync<--AbstractOwnableSynchronizer:设置持有锁的线程
+            deactivate AbstractOwnableSynchronizer
+        else CAS设置失败
+            NonfairSync->AbstractQueuedSynchronizer: acquire
+            activate AbstractQueuedSynchronizer
+                AbstractQueuedSynchronizer->NonfairSync:tryAcquire
+                activate NonfairSync
+                    NonfairSync->Sync:nonfairTryAcquire
+                    activate Sync
+                        alt 锁未被占用
+                            Sync->AbstractQueuedSynchronizer:compareAndSetState
+                            activate AbstractQueuedSynchronizer
+                            Sync<--AbstractQueuedSynchronizer:CAS进行设置
+                            deactivate AbstractQueuedSynchronizer
+
+                            Sync->AbstractOwnableSynchronizer:setExclusiveOwnerThread
+                            activate AbstractOwnableSynchronizer
+                            Sync<--AbstractOwnableSynchronizer:设置锁占用线程
+                            deactivate AbstractOwnableSynchronizer
+                        else 当前线程占用锁
+                            Sync->AbstractQueuedSynchronizer:setState
+                            activate AbstractQueuedSynchronizer
+                            Sync<--AbstractQueuedSynchronizer:
+                            deactivate AbstractQueuedSynchronizer
+                        end
+                    NonfairSync<--Sync:
+                    deactivate Sync
+                AbstractQueuedSynchronizer<--NonfairSync:试获取同步状态
+                deactivate NonfairSync
+                alt 尝试获取失败：tryAcquire return false
+                    AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:addWaiter
+                    activate AbstractQueuedSynchronizer
+                        AbstractQueuedSynchronizer->Node:<create>
+                        activate Node
+                        AbstractQueuedSynchronizer<--Node:构造一个Node节点
+                        deactivate Node
+
+                        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetTail
+                        activate AbstractQueuedSynchronizer
+                        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:CAS设置尾节点为当前节点
+                        deactivate AbstractQueuedSynchronizer
+                        alt 设置尾节点失败
+                            loop 确保成功加入同步队列
+                                AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:enq
+                                activate AbstractQueuedSynchronizer
+                                    alt tail == null
+                                        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetHead
+                                        activate AbstractQueuedSynchronizer
+                                        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:初始同步队列CAS设置头结点
+                                        deactivate AbstractQueuedSynchronizer
+                                    else
+                                        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetTail
+                                        activate AbstractQueuedSynchronizer
+                                        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:队尾添加节点
+                                        deactivate AbstractQueuedSynchronizer
+                                    end
+                                AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+                                deactivate AbstractQueuedSynchronizer
+                            end
+                        end
+
+                    AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:构造一个Node节点，加入同步队列
+                    deactivate AbstractQueuedSynchronizer
+                    loop 当前线程挂起
+                        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:acquireQueued
+                        activate AbstractQueuedSynchronizer
+                            AbstractQueuedSynchronizer->Node:predecessor
+                            activate Node
+                            AbstractQueuedSynchronizer<--Node:获取前置节点
+                            deactivate Node
+                            alt 前置节点是头节点
+                                AbstractQueuedSynchronizer->NonfairSync:tryAcquire
+                                activate NonfairSync
+                                AbstractQueuedSynchronizer<--NonfairSync:尝试请求锁
+                                deactivate NonfairSync
+                                alt tryAcquire 获取锁
+                                    AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:setHead
+                                    activate AbstractQueuedSynchronizer
+                                    AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:设置头节点，清空结点数据
+                                    deactivate AbstractQueuedSynchronizer
+                                end
+                            else 前置节点不是头节点或者获取类锁失败
+                                AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:shouldParkAfterFailedAcquire
+                                activate AbstractQueuedSynchronizer
+                                AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+                                deactivate AbstractQueuedSynchronizer
+
+                                AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetWaitStatus
+                                activate AbstractQueuedSynchronizer
+                                AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:设置结点等待状态:SIGNAL
+                                deactivate AbstractQueuedSynchronizer
+                                alt 前驱结点为SIGNAL状态同时又不是head结点
+                                    AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:parkAndCheckInterrupt
+                                    activate AbstractQueuedSynchronizer
+                                        AbstractQueuedSynchronizer->LockSupport:park
+                                        activate LockSupport
+                                        AbstractQueuedSynchronizer<--LockSupport:将当前线程挂起
+                                        deactivate LockSupport
+                                        AbstractQueuedSynchronizer->Thread:interrupted
+                                        activate Thread
+                                        AbstractQueuedSynchronizer<--Thread:获取线程中断状态
+                                        deactivate Thread
+                                    AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+                                    deactivate AbstractQueuedSynchronizer
+                                end
+                            end
+                        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+                        deactivate AbstractQueuedSynchronizer
+                    end
+                end
+            NonfairSync<--AbstractQueuedSynchronizer:
+            deactivate AbstractQueuedSynchronizer
+        end
+
+    ReentrantLock<--NonfairSync:
+    deactivate NonfairSync
+ReentrantLock --> ReentrantLock:
+deactivate ReentrantLock
+
+@enduml

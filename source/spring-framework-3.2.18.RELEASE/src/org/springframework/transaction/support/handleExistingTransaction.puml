@@ -1,0 +1,80 @@
+@startuml
+
+AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:handleExistingTransaction
+activate AbstractPlatformTransactionManager
+    alt 事务传播行为：NEVER
+        note left of AbstractPlatformTransactionManager #aqua
+            抛出不支持事务异常
+        end note
+    else 事务传播行为：NOT_SUPPORTED
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: suspend
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager: 挂起
+        deactivate AbstractPlatformTransactionManager
+
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: prepareTransactionStatus
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+        deactivate AbstractPlatformTransactionManager
+    else 事务传播行为：REQUIRES_NEW
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: suspend
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager: 挂起
+        deactivate AbstractPlatformTransactionManager
+
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: newTransactionStatus
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager: 创建新事务
+        deactivate AbstractPlatformTransactionManager
+
+        AbstractPlatformTransactionManager->DataSourceTransactionManager: doBegin
+        activate DataSourceTransactionManager
+        AbstractPlatformTransactionManager<--DataSourceTransactionManager:
+        deactivate DataSourceTransactionManager
+
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: prepareSynchronization
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+        deactivate AbstractPlatformTransactionManager
+
+        AbstractPlatformTransactionManager-[#red]>AbstractPlatformTransactionManager: resumeAfterBeginException
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+        deactivate AbstractPlatformTransactionManager
+    else 事务传播行为：NESTED
+        alt 支持保存点
+            AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: prepareTransactionStatus
+            activate AbstractPlatformTransactionManager
+            AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+            deactivate AbstractPlatformTransactionManager
+
+            AbstractPlatformTransactionManager->AbstractTransactionStatus:createAndHoldSavepoint
+            activate AbstractTransactionStatus
+            AbstractPlatformTransactionManager<--AbstractTransactionStatus:
+            deactivate AbstractTransactionStatus
+        else 不支持保存点
+            AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: newTransactionStatus
+            activate AbstractPlatformTransactionManager
+            AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager: 创建新事务
+            deactivate AbstractPlatformTransactionManager
+
+            AbstractPlatformTransactionManager->DataSourceTransactionManager: doBegin
+            activate DataSourceTransactionManager
+            AbstractPlatformTransactionManager<--DataSourceTransactionManager:
+            deactivate DataSourceTransactionManager
+
+            AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: prepareSynchronization
+            activate AbstractPlatformTransactionManager
+            AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+            deactivate AbstractPlatformTransactionManager
+        end
+    else
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: prepareTransactionStatus
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+        deactivate AbstractPlatformTransactionManager
+    end
+AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+deactivate AbstractPlatformTransactionManager
+
+@enduml

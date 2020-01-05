@@ -90,18 +90,42 @@ activate BeanDefinitionParserDelegate
         activate BeanDefinitionParserDelegate
             BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertyValue
             activate BeanDefinitionParserDelegate
+             alt hasRefAttribute
+                BeanDefinitionParserDelegate -> RuntimeBeanReference: <create>
+                activate RuntimeBeanReference
+                BeanDefinitionParserDelegate <-- RuntimeBeanReference:
+                deactivate RuntimeBeanReference
+             else hasValueAttribute
+                BeanDefinitionParserDelegate -> TypedStringValue: <create>
+                activate TypedStringValue
+                BeanDefinitionParserDelegate <-- TypedStringValue:
+                deactivate TypedStringValue
+             else parseSubNode
                 BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertySubElement
                 activate BeanDefinitionParserDelegate
                       BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parsePropertySubElement
                       activate BeanDefinitionParserDelegate
+                        alt nodeName = BEAN_ELEMENT
                           BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseBeanDefinitionElement
                           activate BeanDefinitionParserDelegate
-                          BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 如果是bean节点，递归
+                          BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate: 递归parseBeanDefinitionElement
                           deactivate BeanDefinitionParserDelegate
+                        else REF_ELEMENT
+                            BeanDefinitionParserDelegate -> RuntimeBeanReference: <create>
+                            activate RuntimeBeanReference
+                            BeanDefinitionParserDelegate <-- RuntimeBeanReference:
+                            deactivate RuntimeBeanReference
+                        else [xxx]_ELEMENT
+                              BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parse[xxx]Element
+                              activate BeanDefinitionParserDelegate
+                              BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+                              deactivate BeanDefinitionParserDelegate
+                        end
                       BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
                       deactivate BeanDefinitionParserDelegate
                 BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
                 deactivate BeanDefinitionParserDelegate
+             end
             BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
             deactivate BeanDefinitionParserDelegate
 

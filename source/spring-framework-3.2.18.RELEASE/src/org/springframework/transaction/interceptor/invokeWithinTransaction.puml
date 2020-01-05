@@ -1,0 +1,49 @@
+@startuml
+
+TransactionInterceptor->TransactionInterceptor: invoke
+activate TransactionInterceptor
+
+    TransactionInterceptor->TransactionAspectSupport:invokeWithinTransaction
+    activate TransactionAspectSupport
+        TransactionAspectSupport->AbstractFallbackTransactionAttributeSource: getTransactionAttribute
+        activate AbstractFallbackTransactionAttributeSource
+        TransactionAspectSupport<--AbstractFallbackTransactionAttributeSource: 获取事务注解属性
+        deactivate AbstractFallbackTransactionAttributeSource
+
+        TransactionAspectSupport->TransactionAspectSupport:determineTransactionManager
+        activate TransactionAspectSupport
+        TransactionAspectSupport<--TransactionAspectSupport:获取事务管理器
+        deactivate TransactionAspectSupport
+
+        TransactionAspectSupport->TransactionAspectSupport:createTransactionIfNecessary
+        activate TransactionAspectSupport
+        TransactionAspectSupport<--TransactionAspectSupport:创建事务
+        deactivate TransactionAspectSupport
+
+        TransactionAspectSupport->TransactionInterceptor:proceedWithInvocation
+        activate TransactionInterceptor
+        TransactionAspectSupport<--TransactionInterceptor:执行被增强方法
+        deactivate TransactionInterceptor
+
+        TransactionAspectSupport-[#red]>TransactionAspectSupport:completeTransactionAfterThrowing
+        activate TransactionAspectSupport
+        TransactionAspectSupport<--TransactionAspectSupport:异常回滚
+        deactivate TransactionAspectSupport
+
+        TransactionAspectSupport->TransactionAspectSupport:cleanupTransactionInfo
+        activate TransactionAspectSupport
+        TransactionAspectSupport<--TransactionAspectSupport:清除信息
+        deactivate TransactionAspectSupport
+
+        TransactionAspectSupport->TransactionAspectSupport:commitTransactionAfterReturning
+        activate TransactionAspectSupport
+        TransactionAspectSupport<--TransactionAspectSupport:提交事务
+        deactivate TransactionAspectSupport
+
+    TransactionInterceptor<--TransactionAspectSupport:
+    deactivate TransactionAspectSupport
+
+TransactionInterceptor<--TransactionInterceptor:
+deactivate TransactionInterceptor
+
+@enduml

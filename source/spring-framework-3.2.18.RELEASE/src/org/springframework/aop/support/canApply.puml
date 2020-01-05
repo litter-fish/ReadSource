@@ -1,0 +1,62 @@
+@startuml
+
+AopUtils->AopUtils:canApply
+activate AopUtils
+    AopUtils->AopUtils:canApply
+    activate AopUtils
+        AopUtils->TransactionAttributeSourcePointcut: matches
+        activate TransactionAttributeSourcePointcut
+            TransactionAttributeSourcePointcut->AbstractFallbackTransactionAttributeSource:getTransactionAttribute
+            activate AbstractFallbackTransactionAttributeSource
+                AbstractFallbackTransactionAttributeSource->AbstractFallbackTransactionAttributeSource: computeTransactionAttribute
+                activate AbstractFallbackTransactionAttributeSource
+
+                    AbstractFallbackTransactionAttributeSource->AnnotationTransactionAttributeSource:findTransactionAttribute
+                    activate AnnotationTransactionAttributeSource
+                        AnnotationTransactionAttributeSource->AnnotationTransactionAttributeSource: determineTransactionAttribute
+                        activate AnnotationTransactionAttributeSource
+                            AnnotationTransactionAttributeSource->SpringTransactionAnnotationParser: parseTransactionAnnotation
+                            activate SpringTransactionAnnotationParser
+                                SpringTransactionAnnotationParser->SpringTransactionAnnotationParser:parseTransactionAnnotation
+                                activate SpringTransactionAnnotationParser
+                                    SpringTransactionAnnotationParser->RuleBasedTransactionAttribute:<create>
+                                    activate RuleBasedTransactionAttribute
+                                    SpringTransactionAnnotationParser<--RuleBasedTransactionAttribute:创建事务承载对象
+                                    deactivate RuleBasedTransactionAttribute
+
+                                    SpringTransactionAnnotationParser->RuleBasedTransactionAttribute:setPropagationBehavior
+                                    activate RuleBasedTransactionAttribute
+                                    SpringTransactionAnnotationParser<--RuleBasedTransactionAttribute:设置事务传播行为
+                                    deactivate RuleBasedTransactionAttribute
+
+                                    SpringTransactionAnnotationParser->RuleBasedTransactionAttribute:setIsolationLevel
+                                    activate RuleBasedTransactionAttribute
+                                    SpringTransactionAnnotationParser<--RuleBasedTransactionAttribute:隔离级别
+                                    deactivate RuleBasedTransactionAttribute
+
+                                    SpringTransactionAnnotationParser->RuleBasedTransactionAttribute:setTimeout
+                                    activate RuleBasedTransactionAttribute
+                                    SpringTransactionAnnotationParser<--RuleBasedTransactionAttribute:超时时间
+                                    deactivate RuleBasedTransactionAttribute
+
+                                SpringTransactionAnnotationParser<--SpringTransactionAnnotationParser:
+                                deactivate SpringTransactionAnnotationParser
+                            AnnotationTransactionAttributeSource<--SpringTransactionAnnotationParser: 获取事务标签 Transactional
+                            deactivate SpringTransactionAnnotationParser
+                        AnnotationTransactionAttributeSource<--AnnotationTransactionAttributeSource:
+                        deactivate AnnotationTransactionAttributeSource
+                    AbstractFallbackTransactionAttributeSource<--AnnotationTransactionAttributeSource:
+                    deactivate AnnotationTransactionAttributeSource
+
+                AbstractFallbackTransactionAttributeSource<--AbstractFallbackTransactionAttributeSource:
+                deactivate AbstractFallbackTransactionAttributeSource
+            TransactionAttributeSourcePointcut<--AbstractFallbackTransactionAttributeSource:
+            deactivate AbstractFallbackTransactionAttributeSource
+        AopUtils<--TransactionAttributeSourcePointcut:
+        deactivate TransactionAttributeSourcePointcut
+    AopUtils<--AopUtils:
+    deactivate AopUtils
+AopUtils<--AopUtils:
+deactivate AopUtils
+
+@enduml

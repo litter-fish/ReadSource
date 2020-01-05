@@ -1,0 +1,63 @@
+@startuml
+
+AbstractAutoProxyCreator->AbstractAutoProxyCreator:2 createProxy
+activate AbstractAutoProxyCreator
+    AbstractAutoProxyCreator->ProxyFactory:<create>
+    activate ProxyFactory
+    AbstractAutoProxyCreator<--ProxyFactory:
+    deactivate ProxyFactory
+
+    AbstractAutoProxyCreator->AbstractAutoProxyCreator:buildAdvisors
+    activate AbstractAutoProxyCreator
+        AbstractAutoProxyCreator->DefaultAdvisorAdapterRegistry:wrap
+        activate DefaultAdvisorAdapterRegistry
+        AbstractAutoProxyCreator<--DefaultAdvisorAdapterRegistry:包装Advisor
+        deactivate DefaultAdvisorAdapterRegistry
+    AbstractAutoProxyCreator<--AbstractAutoProxyCreator:将拦截器封装为增强器
+    deactivate AbstractAutoProxyCreator
+
+    AbstractAutoProxyCreator->ProxyFactory:addAdvisor
+    activate ProxyFactory
+    AbstractAutoProxyCreator<--ProxyFactory:加入增强器
+    deactivate ProxyFactory
+
+    AbstractAutoProxyCreator->ProxyFactory:setTargetSource
+    activate ProxyFactory
+    AbstractAutoProxyCreator<--ProxyFactory:设置要代理的类
+    deactivate ProxyFactory
+
+    AbstractAutoProxyCreator->AbstractAutoProxyCreator:customizeProxyFactory
+    activate AbstractAutoProxyCreator
+    AbstractAutoProxyCreator<--AbstractAutoProxyCreator:
+    deactivate AbstractAutoProxyCreator
+    AbstractAutoProxyCreator->ProxyFactory:getProxy
+    activate ProxyFactory
+        ProxyFactory->ProxyCreatorSupport:createAopProxy
+        activate ProxyCreatorSupport
+            ProxyCreatorSupport->ProxyCreatorSupport:getAopProxyFactory
+            activate ProxyCreatorSupport
+            ProxyCreatorSupport<--ProxyCreatorSupport:返回aopProxyFactory
+            deactivate ProxyCreatorSupport
+            ProxyCreatorSupport->DefaultAopProxyFactory:createAopProxy
+            activate DefaultAopProxyFactory
+            alt [ 使用激进优化策略 || proxyTargetClass == true || 代理类不是接口 ]
+                DefaultAopProxyFactory->CglibProxyFactory:createCglibProxy
+                activate CglibProxyFactory
+                DefaultAopProxyFactory<--CglibProxyFactory: new CglibAopProxy()
+                deactivate CglibProxyFactory
+            else
+                DefaultAopProxyFactory->JdkDynamicAopProxy:<create>
+                activate JdkDynamicAopProxy
+                DefaultAopProxyFactory<--JdkDynamicAopProxy:
+                deactivate JdkDynamicAopProxy
+            end
+            ProxyCreatorSupport<--DefaultAopProxyFactory:
+            deactivate DefaultAopProxyFactory
+        ProxyFactory<--ProxyCreatorSupport:
+        deactivate ProxyCreatorSupport
+    AbstractAutoProxyCreator<--ProxyFactory:创建代理
+    deactivate ProxyFactory
+AbstractAutoProxyCreator<--AbstractAutoProxyCreator: 创建代理
+deactivate AbstractAutoProxyCreator
+
+@enduml

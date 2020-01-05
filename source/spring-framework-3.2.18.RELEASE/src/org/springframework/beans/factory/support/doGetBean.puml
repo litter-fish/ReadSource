@@ -1,0 +1,80 @@
+@startuml
+
+AbstractBeanFactory -> AbstractBeanFactory: getBean
+activate AbstractBeanFactory
+    AbstractBeanFactory -> AbstractBeanFactory: doGetBean
+    activate AbstractBeanFactory
+        AbstractBeanFactory -> AbstractBeanFactory:1 transformedBeanName
+        activate AbstractBeanFactory
+        AbstractBeanFactory <-- AbstractBeanFactory: 转换bean的名称
+        deactivate AbstractBeanFactory
+
+        AbstractBeanFactory -> DefaultSingletonBeanRegistry:2 getSingleton
+        activate DefaultSingletonBeanRegistry
+             DefaultSingletonBeanRegistry->DefaultSingletonBeanRegistry: getSingleton
+             activate DefaultSingletonBeanRegistry
+             DefaultSingletonBeanRegistry <--DefaultSingletonBeanRegistry:
+             deactivate DefaultSingletonBeanRegistry
+        AbstractBeanFactory <-- DefaultSingletonBeanRegistry:
+        deactivate DefaultSingletonBeanRegistry
+
+        AbstractBeanFactory ->AbstractBeanFactory: 3 getMergedLocalBeanDefinition
+        activate AbstractBeanFactory
+        AbstractBeanFactory <-- AbstractBeanFactory: 创建RootBeanDefinition
+        deactivate AbstractBeanFactory
+
+        AbstractBeanFactory -> DefaultSingletonBeanRegistry:4 getSingleton
+        activate DefaultSingletonBeanRegistry
+            DefaultSingletonBeanRegistry->DefaultSingletonBeanRegistry: beforeSingletonCreation
+            activate DefaultSingletonBeanRegistry
+            DefaultSingletonBeanRegistry<--DefaultSingletonBeanRegistry:  加入正在加载缓存中
+            deactivate DefaultSingletonBeanRegistry
+            DefaultSingletonBeanRegistry ->ObjectFactory: getObject
+            activate ObjectFactory
+            DefaultSingletonBeanRegistry <--ObjectFactory: 创建bean
+            deactivate ObjectFactory
+            DefaultSingletonBeanRegistry->DefaultSingletonBeanRegistry: afterSingletonCreation
+            activate DefaultSingletonBeanRegistry
+            DefaultSingletonBeanRegistry<--DefaultSingletonBeanRegistry:  移除正在加载缓存数据
+            deactivate DefaultSingletonBeanRegistry
+            DefaultSingletonBeanRegistry->DefaultSingletonBeanRegistry: addSingleton
+            activate DefaultSingletonBeanRegistry
+            DefaultSingletonBeanRegistry<--DefaultSingletonBeanRegistry:  加入已经加载完成缓存中
+            deactivate DefaultSingletonBeanRegistry
+        AbstractBeanFactory <-- DefaultSingletonBeanRegistry: 创建单例bean
+        deactivate DefaultSingletonBeanRegistry
+
+        AbstractBeanFactory ->AbstractBeanFactory:5 getObjectForBeanInstance
+        activate AbstractBeanFactory
+            AbstractBeanFactory ->AbstractBeanFactory:getCachedObjectForFactoryBean
+            activate AbstractBeanFactory
+            AbstractBeanFactory<--AbstractBeanFactory: 从缓存中获取
+            deactivate AbstractBeanFactory
+            AbstractBeanFactory->FactoryBeanRegistrySupport:getObjectFromFactoryBean
+            activate FactoryBeanRegistrySupport
+                FactoryBeanRegistrySupport->FactoryBeanRegistrySupport:doGetObjectFromFactoryBean
+                activate FactoryBeanRegistrySupport
+                    FactoryBeanRegistrySupport->AbstractAutowireCapableBeanFactory: createBean
+                    activate AbstractAutowireCapableBeanFactory
+                    FactoryBeanRegistrySupport<--AbstractAutowireCapableBeanFactory: 通过FactoryBean创建Bean
+                    deactivate AbstractAutowireCapableBeanFactory
+                FactoryBeanRegistrySupport<--FactoryBeanRegistrySupport:
+                deactivate FactoryBeanRegistrySupport
+                FactoryBeanRegistrySupport->AbstractAutowireCapableBeanFactory:postProcessObjectFromFactoryBean
+                activate AbstractAutowireCapableBeanFactory
+                    AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory: applyBeanPostProcessorsAfterInitialization
+                    activate AbstractAutowireCapableBeanFactory
+                    AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:应用实例化后处理器 postProcessAfterInitialization
+                    deactivate AbstractAutowireCapableBeanFactory
+                FactoryBeanRegistrySupport<--AbstractAutowireCapableBeanFactory:
+                deactivate AbstractAutowireCapableBeanFactory
+            AbstractBeanFactory<--FactoryBeanRegistrySupport:通过FactoryBean获取对象
+            deactivate FactoryBeanRegistrySupport
+        AbstractBeanFactory<--AbstractBeanFactory: 实例化bean
+        deactivate AbstractBeanFactory
+    AbstractBeanFactory <-- AbstractBeanFactory:
+    deactivate AbstractBeanFactory
+AbstractBeanFactory <-- AbstractBeanFactory:
+deactivate AbstractBeanFactory
+
+@enduml

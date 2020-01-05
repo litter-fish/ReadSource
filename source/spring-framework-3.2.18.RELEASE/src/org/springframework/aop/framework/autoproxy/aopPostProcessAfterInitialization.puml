@@ -1,0 +1,39 @@
+@startuml
+
+AbstractAutoProxyCreator->AbstractAutoProxyCreator: postProcessAfterInitialization
+activate AbstractAutoProxyCreator
+
+    AbstractAutoProxyCreator->AbstractAutoProxyCreator: wrapIfNecessary
+    activate AbstractAutoProxyCreator
+        AbstractAutoProxyCreator->AbstractAdvisorAutoProxyCreator:1 getAdvicesAndAdvisorsForBean
+        activate AbstractAdvisorAutoProxyCreator
+            AbstractAdvisorAutoProxyCreator->AbstractAdvisorAutoProxyCreator:findEligibleAdvisors
+            activate AbstractAdvisorAutoProxyCreator
+                AbstractAdvisorAutoProxyCreator->AbstractAdvisorAutoProxyCreator:findCandidateAdvisors
+                activate AbstractAdvisorAutoProxyCreator
+
+                AbstractAdvisorAutoProxyCreator<--AbstractAdvisorAutoProxyCreator:获取所有的增强
+                deactivate AbstractAdvisorAutoProxyCreator
+
+                AbstractAdvisorAutoProxyCreator->AbstractAdvisorAutoProxyCreator:findAdvisorsThatCanApply
+                activate AbstractAdvisorAutoProxyCreator
+                AbstractAdvisorAutoProxyCreator<--AbstractAdvisorAutoProxyCreator:获取与class匹配的增强器
+                deactivate AbstractAdvisorAutoProxyCreator
+            AbstractAdvisorAutoProxyCreator<--AbstractAdvisorAutoProxyCreator:
+            deactivate AbstractAdvisorAutoProxyCreator
+        AbstractAutoProxyCreator<--AbstractAdvisorAutoProxyCreator:获取增强方法
+        deactivate AbstractAdvisorAutoProxyCreator
+
+        AbstractAutoProxyCreator->AbstractAutoProxyCreator:2 createProxy
+        activate AbstractAutoProxyCreator
+        AbstractAutoProxyCreator<--AbstractAutoProxyCreator: 创建代理
+        deactivate AbstractAutoProxyCreator
+
+    AbstractAutoProxyCreator<--AbstractAutoProxyCreator:
+    deactivate AbstractAutoProxyCreator
+
+AbstractAutoProxyCreator<--AbstractAutoProxyCreator: 初始化bean之后调用
+deactivate AbstractAutoProxyCreator
+
+
+@enduml

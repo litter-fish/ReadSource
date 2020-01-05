@@ -1,0 +1,12 @@
+@startuml
+
+ReentrantLock -> ReentrantLock: tryLock
+activate ReentrantLock
+    ReentrantLock->Sync:nonfairTryAcquire
+    activate Sync
+    ReentrantLock<--Sync:
+    deactivate Sync
+ReentrantLock --> ReentrantLock:
+deactivate ReentrantLock
+
+@enduml

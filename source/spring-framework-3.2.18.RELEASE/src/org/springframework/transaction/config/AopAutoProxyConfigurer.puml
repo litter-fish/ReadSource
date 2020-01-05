@@ -1,0 +1,5 @@
+@startuml
+
+AnnotationTransactionAttributeSource "1" *-- "many" Class02 : contains
+
+@enduml

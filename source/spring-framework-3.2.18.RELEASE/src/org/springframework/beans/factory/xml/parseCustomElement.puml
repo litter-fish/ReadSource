@@ -1,0 +1,64 @@
+@startuml
+
+DefaultBeanDefinitionDocumentReader -> BeanDefinitionParserDelegate: parseCustomElement
+activate BeanDefinitionParserDelegate
+    BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseCustomElement
+    activate BeanDefinitionParserDelegate
+        BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: parseCustomElement
+        activate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate -> BeanDefinitionParserDelegate: getNamespaceURI
+            activate BeanDefinitionParserDelegate
+            BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+            deactivate BeanDefinitionParserDelegate
+
+            BeanDefinitionParserDelegate -> DefaultNamespaceHandlerResolver: resolve
+            activate DefaultNamespaceHandlerResolver
+                DefaultNamespaceHandlerResolver -> BeanUtils: instantiateClass
+                activate BeanUtils
+                DefaultNamespaceHandlerResolver <-- BeanUtils:
+                deactivate BeanUtils
+                DefaultNamespaceHandlerResolver -> XXX_NamespaceHandler: init
+                activate XXX_NamespaceHandler
+                DefaultNamespaceHandlerResolver <-- XXX_NamespaceHandler:
+                deactivate XXX_NamespaceHandler
+            BeanDefinitionParserDelegate <-- DefaultNamespaceHandlerResolver:
+            deactivate DefaultNamespaceHandlerResolver
+
+            BeanDefinitionParserDelegate -> NamespaceHandlerSupport: parse
+            activate NamespaceHandlerSupport
+                NamespaceHandlerSupport -> NamespaceHandlerSupport: findParserForElement
+                activate NamespaceHandlerSupport
+                NamespaceHandlerSupport <-- NamespaceHandlerSupport:
+                deactivate NamespaceHandlerSupport
+                NamespaceHandlerSupport -> AbstractBeanDefinitionParser: parse
+                activate AbstractBeanDefinitionParser
+                    AbstractBeanDefinitionParser -> AbstractSingleBeanDefinitionParser: parseInternal
+                    activate AbstractSingleBeanDefinitionParser
+                        AbstractSingleBeanDefinitionParser-> AbstractSingleBeanDefinitionParser: doParse
+                        activate AbstractSingleBeanDefinitionParser
+                        AbstractSingleBeanDefinitionParser <-- AbstractSingleBeanDefinitionParser: Sub_XXX_Parser
+                        deactivate AbstractSingleBeanDefinitionParser
+                    AbstractBeanDefinitionParser <-- AbstractSingleBeanDefinitionParser:
+                    deactivate AbstractSingleBeanDefinitionParser
+
+                    AbstractBeanDefinitionParser -> BeanDefinitionHolder: <create>
+                    activate BeanDefinitionHolder
+                    AbstractBeanDefinitionParser <-- BeanDefinitionHolder: 创建bean定义的持有者
+                    deactivate BeanDefinitionHolder
+
+                    AbstractBeanDefinitionParser -> AbstractBeanDefinitionParser: registerBeanDefinition
+                    activate AbstractBeanDefinitionParser
+                    AbstractBeanDefinitionParser <-- AbstractBeanDefinitionParser: 注册bean定义
+                    deactivate AbstractBeanDefinitionParser
+                NamespaceHandlerSupport <-- AbstractBeanDefinitionParser:
+                deactivate AbstractBeanDefinitionParser
+            BeanDefinitionParserDelegate <-- NamespaceHandlerSupport:
+            deactivate NamespaceHandlerSupport
+        BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+        deactivate BeanDefinitionParserDelegate
+    BeanDefinitionParserDelegate <-- BeanDefinitionParserDelegate:
+    deactivate BeanDefinitionParserDelegate
+DefaultBeanDefinitionDocumentReader <-- BeanDefinitionParserDelegate:
+deactivate BeanDefinitionParserDelegate
+
+@enduml

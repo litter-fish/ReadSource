@@ -1,0 +1,48 @@
+@startuml
+
+ReentrantLock -> ReentrantLock: unlock
+activate ReentrantLock
+
+    ReentrantLock->AbstractQueuedSynchronizer:release
+    activate AbstractQueuedSynchronizer
+        AbstractQueuedSynchronizer->Sync:tryRelease
+        activate Sync
+            alt 无线程持有锁
+                Sync->AbstractOwnableSynchronizer:setExclusiveOwnerThread
+                activate AbstractOwnableSynchronizer
+                Sync<--AbstractOwnableSynchronizer:清除占用锁线程
+                deactivate AbstractOwnableSynchronizer
+            end
+            Sync->AbstractQueuedSynchronizer:setState
+            activate AbstractQueuedSynchronizer
+            Sync<--AbstractQueuedSynchronizer:设置同步状态值
+            deactivate AbstractQueuedSynchronizer
+        AbstractQueuedSynchronizer<--Sync:
+        deactivate Sync
+
+        alt 释放锁成功且同步队列存在头节点且状态不为0
+
+            AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:unparkSuccessor
+            activate AbstractQueuedSynchronizer
+                alt 头节点状态值 < 0
+                    AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetWaitStatus
+                    activate AbstractQueuedSynchronizer
+                    AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:CAS更新状态值为0
+                    deactivate AbstractQueuedSynchronizer
+                end
+                alt 找到下一个需要唤醒的结点
+                    AbstractQueuedSynchronizer->LockSupport:unpark
+                    activate LockSupport
+                    AbstractQueuedSynchronizer<--LockSupport:唤醒指定线程
+                    deactivate LockSupport
+                end
+            AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:唤醒头节点
+            deactivate AbstractQueuedSynchronizer
+        end
+    ReentrantLock<--AbstractQueuedSynchronizer:
+    deactivate AbstractQueuedSynchronizer
+
+ReentrantLock --> ReentrantLock:
+deactivate ReentrantLock
+
+@enduml

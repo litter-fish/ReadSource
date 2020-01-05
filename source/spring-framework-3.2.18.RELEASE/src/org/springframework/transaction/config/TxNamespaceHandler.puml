@@ -1,0 +1,78 @@
+@startuml
+
+AnnotationDrivenBeanDefinitionParser->AnnotationDrivenBeanDefinitionParser:parse
+activate AnnotationDrivenBeanDefinitionParser
+    AnnotationDrivenBeanDefinitionParser->AopAutoProxyConfigurer:configureAutoProxyCreator
+    activate AopAutoProxyConfigurer
+        AopAutoProxyConfigurer->AopNamespaceUtils:registerAutoProxyCreatorIfNecessary
+        activate AopNamespaceUtils
+            AopNamespaceUtils->AopConfigUtils:registerAutoProxyCreatorIfNecessary
+            activate AopConfigUtils
+                AopConfigUtils->AopConfigUtils:registerAutoProxyCreatorIfNecessary
+                activate AopConfigUtils
+                    AopConfigUtils->AopConfigUtils:registerOrEscalateApcAsRequired
+                    activate AopConfigUtils
+                        AopConfigUtils->RootBeanDefinition:<create>
+                        activate RootBeanDefinition
+                        AopConfigUtils<--RootBeanDefinition:创建 InfrastructureAdvisorAutoProxyCreator 的bean定义
+                        deactivate RootBeanDefinition
+                        AopConfigUtils->DefaultListableBeanFactory:registerBeanDefinition
+                        activate DefaultListableBeanFactory
+                        AopConfigUtils<--DefaultListableBeanFactory:注册 InfrastructureAdvisorAutoProxyCreator
+                        deactivate DefaultListableBeanFactory
+                    AopConfigUtils<--AopConfigUtils:
+                    deactivate AopConfigUtils
+                AopConfigUtils<--AopConfigUtils:
+                deactivate AopConfigUtils
+            AopNamespaceUtils<--AopConfigUtils:注册InfrastructureAdvisorAutoProxyCreator类型bean
+            deactivate AopConfigUtils
+
+            AopNamespaceUtils->AopNamespaceUtils: useClassProxyingIfNecessary
+            activate AopNamespaceUtils
+            AopNamespaceUtils<--AopNamespaceUtils:处理proxy-target-class和expose-proxy属性
+            deactivate AopNamespaceUtils
+
+            AopNamespaceUtils->AopNamespaceUtils: registerComponentIfNecessary
+            activate AopNamespaceUtils
+            AopNamespaceUtils<--AopNamespaceUtils:注册组件并通知
+            deactivate AopNamespaceUtils
+
+        AopAutoProxyConfigurer<--AopNamespaceUtils:
+        deactivate AopNamespaceUtils
+    AnnotationDrivenBeanDefinitionParser<--AopAutoProxyConfigurer:
+    deactivate AopAutoProxyConfigurer
+
+    AnnotationDrivenBeanDefinitionParser->RootBeanDefinition:<create>
+    activate RootBeanDefinition
+    AnnotationDrivenBeanDefinitionParser<--RootBeanDefinition:创建 AnnotationTransactionAttributeSource 的bean定义
+    deactivate RootBeanDefinition
+
+    AnnotationDrivenBeanDefinitionParser->DefaultListableBeanFactory:registerBeanDefinition
+    activate DefaultListableBeanFactory
+    AnnotationDrivenBeanDefinitionParser<--DefaultListableBeanFactory:注册 AnnotationTransactionAttributeSource
+    deactivate DefaultListableBeanFactory
+
+    AnnotationDrivenBeanDefinitionParser->RootBeanDefinition:<create>
+    activate RootBeanDefinition
+    AnnotationDrivenBeanDefinitionParser<--RootBeanDefinition:创建 TransactionInterceptor 的bean定义
+    deactivate RootBeanDefinition
+
+    AnnotationDrivenBeanDefinitionParser->DefaultListableBeanFactory:registerBeanDefinition
+    activate DefaultListableBeanFactory
+    AnnotationDrivenBeanDefinitionParser<--DefaultListableBeanFactory:注册 TransactionInterceptor
+    deactivate DefaultListableBeanFactory
+
+    AnnotationDrivenBeanDefinitionParser->RootBeanDefinition:<create>
+    activate RootBeanDefinition
+    AnnotationDrivenBeanDefinitionParser<--RootBeanDefinition:创建 BeanFactoryTransactionAttributeSourceAdvisor 的bean定义
+    deactivate RootBeanDefinition
+
+    AnnotationDrivenBeanDefinitionParser->DefaultListableBeanFactory:registerBeanDefinition
+    activate DefaultListableBeanFactory
+    AnnotationDrivenBeanDefinitionParser<--DefaultListableBeanFactory:注册 BeanFactoryTransactionAttributeSourceAdvisor
+    deactivate DefaultListableBeanFactory
+
+AnnotationDrivenBeanDefinitionParser<--AnnotationDrivenBeanDefinitionParser:
+deactivate AnnotationDrivenBeanDefinitionParser
+
+@enduml

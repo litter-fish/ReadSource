@@ -1,0 +1,68 @@
+@startuml
+
+AbstractAdvisorAutoProxyCreator->AbstractAdvisorAutoProxyCreator: findEligibleAdvisors
+activate AbstractAdvisorAutoProxyCreator
+    AbstractAdvisorAutoProxyCreator->AnnotationAwareAspectJAutoProxyCreator:findCandidateAdvisors
+    activate AnnotationAwareAspectJAutoProxyCreator
+        AnnotationAwareAspectJAutoProxyCreator->BeanFactoryAspectJAdvisorsBuilder:buildAspectJAdvisors
+        activate BeanFactoryAspectJAdvisorsBuilder
+            BeanFactoryAspectJAdvisorsBuilder->AbstractAspectJAdvisorFactory:isAspect
+            activate AbstractAspectJAdvisorFactory
+            BeanFactoryAspectJAdvisorsBuilder<--AbstractAspectJAdvisorFactory:是否存在AspectJ注解
+            deactivate AbstractAspectJAdvisorFactory
+
+            BeanFactoryAspectJAdvisorsBuilder->ReflectiveAspectJAdvisorFactory:存在AspectJ注解，则调用：getAdvisors
+            activate ReflectiveAspectJAdvisorFactory
+                ReflectiveAspectJAdvisorFactory->ReflectiveAspectJAdvisorFactory:getAdvisorMethods
+                activate ReflectiveAspectJAdvisorFactory
+                ReflectiveAspectJAdvisorFactory<--ReflectiveAspectJAdvisorFactory:获取AspectJ注解类中的方法
+                deactivate ReflectiveAspectJAdvisorFactory
+                loop getAdvisorMethods返回的方法数组，排除Pointcut注解方法
+                    ReflectiveAspectJAdvisorFactory->ReflectiveAspectJAdvisorFactory:getAdvisor
+                    activate ReflectiveAspectJAdvisorFactory
+                        ReflectiveAspectJAdvisorFactory->ReflectiveAspectJAdvisorFactory:getPointcut
+                        activate ReflectiveAspectJAdvisorFactory
+                            ReflectiveAspectJAdvisorFactory->AbstractAspectJAdvisorFactory: findAspectJAnnotationOnMethod
+                            activate AbstractAspectJAdvisorFactory
+                            ReflectiveAspectJAdvisorFactory<--AbstractAspectJAdvisorFactory: 获取方法上的注解(Before/Pointcut等)
+                            deactivate AbstractAspectJAdvisorFactory
+
+                            ReflectiveAspectJAdvisorFactory->AspectJExpressionPointcut:<create>
+                            activate AspectJExpressionPointcut
+                            ReflectiveAspectJAdvisorFactory<--AspectJExpressionPointcut:
+                            deactivate AspectJExpressionPointcut
+                        ReflectiveAspectJAdvisorFactory<--ReflectiveAspectJAdvisorFactory:获取切点信息
+                        deactivate ReflectiveAspectJAdvisorFactory
+
+                        ReflectiveAspectJAdvisorFactory->InstantiationModelAwarePointcutAdvisorImpl:<create>
+                        activate InstantiationModelAwarePointcutAdvisorImpl
+                        ReflectiveAspectJAdvisorFactory<--InstantiationModelAwarePointcutAdvisorImpl:
+                        deactivate InstantiationModelAwarePointcutAdvisorImpl
+                    ReflectiveAspectJAdvisorFactory<--ReflectiveAspectJAdvisorFactory:
+                    deactivate ReflectiveAspectJAdvisorFactory
+                end
+            BeanFactoryAspectJAdvisorsBuilder<--ReflectiveAspectJAdvisorFactory:
+            deactivate ReflectiveAspectJAdvisorFactory
+
+        AnnotationAwareAspectJAutoProxyCreator<--BeanFactoryAspectJAdvisorsBuilder:
+        deactivate BeanFactoryAspectJAdvisorsBuilder
+    AbstractAdvisorAutoProxyCreator<--AnnotationAwareAspectJAutoProxyCreator:获取所有的增强
+    deactivate AnnotationAwareAspectJAutoProxyCreator
+
+    AbstractAdvisorAutoProxyCreator->AbstractAdvisorAutoProxyCreator: findAdvisorsThatCanApply
+    activate AbstractAdvisorAutoProxyCreator
+        AbstractAdvisorAutoProxyCreator->AopUtils: findAdvisorsThatCanApply
+        activate AopUtils
+            AopUtils->AopUtils:canApply
+            activate AopUtils
+            AopUtils<--AopUtils:
+            deactivate AopUtils
+        AbstractAdvisorAutoProxyCreator<--AopUtils: 过滤已经得到的advisors
+        deactivate AopUtils
+    AbstractAdvisorAutoProxyCreator<--AbstractAdvisorAutoProxyCreator:获取与class匹配的增强器
+    deactivate AbstractAdvisorAutoProxyCreator
+
+AbstractAdvisorAutoProxyCreator<--AbstractAdvisorAutoProxyCreator:
+deactivate AbstractAdvisorAutoProxyCreator
+
+@enduml

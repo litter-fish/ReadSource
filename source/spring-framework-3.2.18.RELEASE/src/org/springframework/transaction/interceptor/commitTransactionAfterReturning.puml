@@ -1,0 +1,94 @@
+@startuml
+
+TransactionAspectSupport->TransactionAspectSupport:commitTransactionAfterReturning
+activate TransactionAspectSupport
+    TransactionAspectSupport->AbstractPlatformTransactionManager:commit
+    activate AbstractPlatformTransactionManager
+        alt 满足回滚条件
+            note left of AbstractPlatformTransactionManager #aqua
+                如果事务链中已被标记回滚，
+                那么不在尝试提交，直接回滚
+            end note
+            AbstractPlatformTransactionManager->AbstractPlatformTransactionManager: processRollback
+            activate AbstractPlatformTransactionManager
+            AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+            deactivate AbstractPlatformTransactionManager
+        else 可以提交
+            AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:processCommit
+            activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:prepareForCommit
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+                deactivate AbstractPlatformTransactionManager
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:triggerBeforeCommit
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:触发事务提交前处理事件
+                deactivate AbstractPlatformTransactionManager
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:triggerBeforeCompletion
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:触发事务完成前处理事件
+                deactivate AbstractPlatformTransactionManager
+
+                alt 对于嵌套事务: hasSavepoint
+                    note right of AbstractPlatformTransactionManager #aqua
+                        嵌套事务的提交由
+                        最外层事务控制内层
+                        只进行保存点清除操作
+                    end note
+                    AbstractPlatformTransactionManager->AbstractTransactionStatus:releaseHeldSavepoint
+                    activate AbstractTransactionStatus
+                        AbstractTransactionStatus->JdbcTransactionObjectSupport:releaseSavepoint
+                        activate JdbcTransactionObjectSupport
+                             JdbcTransactionObjectSupport->Connection:releaseSavepoint
+                             activate Connection
+                             JdbcTransactionObjectSupport<--Connection:底层连接进行保存点释放
+                             deactivate Connection
+                        AbstractTransactionStatus<--JdbcTransactionObjectSupport:释放保存点
+                        deactivate JdbcTransactionObjectSupport
+                        AbstractTransactionStatus->AbstractTransactionStatus:setSavepoint
+                        activate AbstractTransactionStatus
+                        AbstractTransactionStatus<--AbstractTransactionStatus:清空保存点
+                        deactivate AbstractTransactionStatus
+                    AbstractPlatformTransactionManager<--AbstractTransactionStatus:清除保存点
+                    deactivate AbstractTransactionStatus
+                else 独立事务直接提交
+                    AbstractPlatformTransactionManager->DataSourceTransactionManager: doCommit
+                    activate DataSourceTransactionManager
+                        DataSourceTransactionManager->Connection:getConnection
+                        activate Connection
+                        DataSourceTransactionManager<--Connection:获取数据库连接
+                        deactivate Connection
+                        DataSourceTransactionManager->Connection:commit
+                        activate Connection
+                        DataSourceTransactionManager<--Connection:底层连接进行提交
+                        deactivate Connection
+                    AbstractPlatformTransactionManager<--DataSourceTransactionManager:执行事务提交
+                    deactivate DataSourceTransactionManager
+                end
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:triggerAfterCommit
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:触发事务提交后处理事件
+                deactivate AbstractPlatformTransactionManager
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:triggerAfterCompletion
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:触发事务完成后处理事件
+                deactivate AbstractPlatformTransactionManager
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:cleanupAfterCompletion
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:事务完成后一些清理工作
+                deactivate AbstractPlatformTransactionManager
+
+            AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+            deactivate AbstractPlatformTransactionManager
+        end
+    TransactionAspectSupport<--AbstractPlatformTransactionManager:
+    deactivate AbstractPlatformTransactionManager
+TransactionAspectSupport<--TransactionAspectSupport:提交事务
+deactivate TransactionAspectSupport
+
+@enduml

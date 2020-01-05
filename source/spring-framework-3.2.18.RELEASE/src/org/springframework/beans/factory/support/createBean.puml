@@ -1,0 +1,107 @@
+@startuml
+
+AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory: createBean
+activate AbstractAutowireCapableBeanFactory
+    AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:1 resolveBeanClass
+    activate AbstractAutowireCapableBeanFactory
+    AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:
+    deactivate AbstractAutowireCapableBeanFactory
+
+    AbstractAutowireCapableBeanFactory->AbstractBeanDefinition:2 prepareMethodOverrides
+    activate AbstractBeanDefinition
+    AbstractAutowireCapableBeanFactory<--AbstractBeanDefinition:处理lookup/replace-method属性
+    deactivate AbstractBeanDefinition
+
+    AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:3 resolveBeforeInstantiation
+    activate AbstractAutowireCapableBeanFactory
+        AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:applyBeanPostProcessorsBeforeInstantiation
+        activate AbstractAutowireCapableBeanFactory
+        AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:应用bean的实例化前处理器
+        deactivate AbstractAutowireCapableBeanFactory
+
+        AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:applyBeanPostProcessorsAfterInitialization
+        activate AbstractAutowireCapableBeanFactory
+        AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:应用bean的初始化前处理器
+        deactivate AbstractAutowireCapableBeanFactory
+    AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:
+    deactivate AbstractAutowireCapableBeanFactory
+
+    AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4 doCreateBean
+    activate AbstractAutowireCapableBeanFactory
+        AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.1 createBeanInstance
+        activate AbstractAutowireCapableBeanFactory
+        AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:BeanDefinition转为BeanWrapper
+        deactivate AbstractAutowireCapableBeanFactory
+
+        AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.2 addSingletonFactory
+        activate AbstractAutowireCapableBeanFactory
+        AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:加入创建实例的ObjectFactory
+        deactivate AbstractAutowireCapableBeanFactory
+
+        AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.3 populateBean
+        activate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory->InstantiationAwareBeanPostProcessor: 4.3.1 postProcessAfterInstantiation
+            activate InstantiationAwareBeanPostProcessor
+            AbstractAutowireCapableBeanFactory<--InstantiationAwareBeanPostProcessor: 调用实例化后置处理器
+            deactivate InstantiationAwareBeanPostProcessor
+
+            AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.3.2 autowireByName/autowireByType
+            activate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:自动注入
+            deactivate AbstractAutowireCapableBeanFactory
+
+            AbstractAutowireCapableBeanFactory->InstantiationAwareBeanPostProcessor:4.3.3 postProcessPropertyValues
+            activate InstantiationAwareBeanPostProcessor
+            AbstractAutowireCapableBeanFactory<--InstantiationAwareBeanPostProcessor: 对属性进行后置处理
+            deactivate InstantiationAwareBeanPostProcessor
+
+            AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.3.4 applyPropertyValues
+            activate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:将属性应用的bean中
+            deactivate AbstractAutowireCapableBeanFactory
+
+        AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:bean属性填充
+        deactivate AbstractAutowireCapableBeanFactory
+
+        AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.4 initializeBean
+        activate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.4.1 invokeAwareMethods
+            activate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:处理相关Aware接口
+            deactivate AbstractAutowireCapableBeanFactory
+
+            AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.4.2 applyBeanPostProcessorsBeforeInitialization
+            activate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:应用初始化前处理器
+            deactivate AbstractAutowireCapableBeanFactory
+
+            AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.4.3 invokeInitMethods
+            activate AbstractAutowireCapableBeanFactory
+                AbstractAutowireCapableBeanFactory->InitializingBean:afterPropertiesSet
+                activate InitializingBean
+                AbstractAutowireCapableBeanFactory<--InitializingBean:调用初始化方法
+                deactivate InitializingBean
+
+                AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:invokeCustomInitMethod
+                activate AbstractAutowireCapableBeanFactory
+                AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory: 调用自定义的初始化方法(init-method)
+                deactivate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:调用初始化方法
+            deactivate AbstractAutowireCapableBeanFactory
+
+            AbstractAutowireCapableBeanFactory->AbstractAutowireCapableBeanFactory:4.4.4 applyBeanPostProcessorsAfterInitialization
+            activate AbstractAutowireCapableBeanFactory
+            AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:应用初始化后处理器
+            deactivate AbstractAutowireCapableBeanFactory
+
+        AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:初始化前后处理器BeanPostProcessor的应用
+        deactivate AbstractAutowireCapableBeanFactory
+
+    AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory:创建bean
+    deactivate AbstractAutowireCapableBeanFactory
+
+AbstractAutowireCapableBeanFactory<--AbstractAutowireCapableBeanFactory: 通过FactoryBean创建Bean
+deactivate AbstractAutowireCapableBeanFactory
+
+
+@enduml

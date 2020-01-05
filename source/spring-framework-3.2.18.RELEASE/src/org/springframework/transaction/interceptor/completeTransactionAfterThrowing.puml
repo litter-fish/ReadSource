@@ -1,0 +1,122 @@
+@startuml
+
+TransactionAspectSupport->TransactionAspectSupport:completeTransactionAfterThrowing
+activate TransactionAspectSupport
+    note right of TransactionAspectSupport
+        RuntimeException、Error进行回滚
+    end note
+    TransactionAspectSupport->DefaultTransactionAttribute:rollbackOn
+    activate DefaultTransactionAttribute
+    TransactionAspectSupport<--DefaultTransactionAttribute: 是否回滚判断
+    deactivate DefaultTransactionAttribute
+
+    TransactionAspectSupport->AbstractPlatformTransactionManager:rollback
+    activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:processRollback
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+        deactivate AbstractPlatformTransactionManager
+
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:triggerBeforeCompletion
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:触发事务完成前事件
+        deactivate AbstractPlatformTransactionManager
+
+        alt 存在保存点
+            AbstractPlatformTransactionManager->AbstractTransactionStatus:rollbackToHeldSavepoint
+            activate AbstractTransactionStatus
+                AbstractTransactionStatus->JdbcTransactionObjectSupport:rollbackToSavepoint
+                activate JdbcTransactionObjectSupport
+                    JdbcTransactionObjectSupport->Connection:rollback
+                    activate Connection
+                    JdbcTransactionObjectSupport<--Connection:底层数据库进行回滚
+                    deactivate Connection
+                AbstractTransactionStatus<--JdbcTransactionObjectSupport:根据保存点进行回滚
+                deactivate JdbcTransactionObjectSupport
+                AbstractTransactionStatus->AbstractTransactionStatus:setSavepoint
+                activate AbstractTransactionStatus
+                AbstractTransactionStatus<--AbstractTransactionStatus:清空保存点
+                deactivate AbstractTransactionStatus
+            AbstractPlatformTransactionManager<--AbstractTransactionStatus:
+            deactivate AbstractTransactionStatus
+        else 独立的新事务
+            AbstractPlatformTransactionManager->DataSourceTransactionManager:doRollback
+            activate DataSourceTransactionManager
+                DataSourceTransactionManager->Connection:rollback
+                activate Connection
+                DataSourceTransactionManager<--Connection:底层数据库进行回滚
+                deactivate Connection
+            AbstractPlatformTransactionManager<--DataSourceTransactionManager:
+            deactivate DataSourceTransactionManager
+        else 不是独立事务
+            note left of AbstractPlatformTransactionManager
+                标记状态，等待事务链统一回滚
+            end note
+            AbstractPlatformTransactionManager->DataSourceTransactionManager:doSetRollbackOnly
+            activate DataSourceTransactionManager
+                DataSourceTransactionManager->DataSourceTransactionObject:setRollbackOnly
+                activate DataSourceTransactionObject
+                DataSourceTransactionManager<--DataSourceTransactionObject:设置连接回滚标识
+                deactivate DataSourceTransactionObject
+            AbstractPlatformTransactionManager<--DataSourceTransactionManager:
+            deactivate DataSourceTransactionManager
+        end
+
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:triggerAfterCompletion
+        activate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:触发事务完成后事件
+        deactivate AbstractPlatformTransactionManager
+
+        AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:cleanupAfterCompletion
+        activate AbstractPlatformTransactionManager
+            AbstractPlatformTransactionManager->DefaultTransactionStatus:setCompleted
+            activate DefaultTransactionStatus
+            AbstractPlatformTransactionManager<--DefaultTransactionStatus:设置事务完成状态
+            deactivate DefaultTransactionStatus
+
+            alt 新的事务
+                AbstractPlatformTransactionManager->DataSourceTransactionManager:doCleanupAfterCompletion
+                activate DataSourceTransactionManager
+                    DataSourceTransactionManager->TransactionSynchronizationManager:unbindResource
+                    activate TransactionSynchronizationManager
+                    DataSourceTransactionManager<--TransactionSynchronizationManager: 将数据库连接从当前线程中解除绑定
+                    deactivate TransactionSynchronizationManager
+
+                    DataSourceTransactionManager->Connection:setAutoCommit
+                    activate Connection
+                    DataSourceTransactionManager<--Connection:恢复数据库的自动提交
+                    deactivate Connection
+
+                    DataSourceTransactionManager->DataSourceUtils:resetConnectionAfterTransaction
+                    activate DataSourceUtils
+                    DataSourceTransactionManager<--DataSourceUtils:重置数据库连接（设置只读、隔离级别属性）
+                    deactivate DataSourceUtils
+
+                    DataSourceTransactionManager->DataSourceUtils:releaseConnection
+                    activate DataSourceUtils
+                    DataSourceTransactionManager<--DataSourceUtils:释放连接
+                    deactivate DataSourceUtils
+
+                    DataSourceTransactionManager->ConnectionHolder:clear
+                    activate ConnectionHolder
+                    DataSourceTransactionManager<--ConnectionHolder:清除连接状态
+                    deactivate ConnectionHolder
+
+                AbstractPlatformTransactionManager<--DataSourceTransactionManager:
+                deactivate DataSourceTransactionManager
+            end
+
+            AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:resume
+            activate AbstractPlatformTransactionManager
+            AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:结束之前挂起的事务状态
+            deactivate AbstractPlatformTransactionManager
+        AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:信息的清除
+        deactivate AbstractPlatformTransactionManager
+
+    TransactionAspectSupport<--AbstractPlatformTransactionManager:
+    deactivate AbstractPlatformTransactionManager
+
+TransactionAspectSupport<--TransactionAspectSupport:事务回滚
+deactivate TransactionAspectSupport
+
+@enduml

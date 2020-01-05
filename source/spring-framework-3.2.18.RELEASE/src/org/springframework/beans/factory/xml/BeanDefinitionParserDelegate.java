@@ -1036,6 +1036,7 @@ public class BeanDefinitionParserDelegate {
 					" is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element", ele);
 		}
 
+		// 是否存在ref属性
 		if (hasRefAttribute) {
 			String refName = ele.getAttribute(REF_ATTRIBUTE);
 			if (!StringUtils.hasText(refName)) {
@@ -1045,11 +1046,13 @@ public class BeanDefinitionParserDelegate {
 			ref.setSource(extractSource(ele));
 			return ref;
 		}
+		// 是否存在value属性
 		else if (hasValueAttribute) {
 			TypedStringValue valueHolder = new TypedStringValue(ele.getAttribute(VALUE_ATTRIBUTE));
 			valueHolder.setSource(extractSource(ele));
 			return valueHolder;
 		}
+		// 是否存在子节点
 		else if (subElement != null) {
 			return parsePropertySubElement(subElement, bd);
 		}
@@ -1075,14 +1078,14 @@ public class BeanDefinitionParserDelegate {
 		if (!isDefaultNamespace(ele)) {
 			return parseNestedCustomElement(ele, bd);
 		}
-		else if (nodeNameEquals(ele, BEAN_ELEMENT)) {
+		else if (nodeNameEquals(ele, BEAN_ELEMENT)) { // bean节点解析
 			BeanDefinitionHolder nestedBd = parseBeanDefinitionElement(ele, bd);
 			if (nestedBd != null) {
 				nestedBd = decorateBeanDefinitionIfRequired(ele, nestedBd, bd);
 			}
 			return nestedBd;
 		}
-		else if (nodeNameEquals(ele, REF_ELEMENT)) {
+		else if (nodeNameEquals(ele, REF_ELEMENT)) { // ref节点解析
 			// A generic reference to any name of any bean.
 			String refName = ele.getAttribute(BEAN_REF_ATTRIBUTE);
 			boolean toParent = false;

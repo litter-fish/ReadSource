@@ -1,0 +1,41 @@
+@startuml
+
+AspectJAutoProxyBeanDefinitionParser -> AspectJAutoProxyBeanDefinitionParser: parse
+activate AspectJAutoProxyBeanDefinitionParser
+    AspectJAutoProxyBeanDefinitionParser->AopNamespaceUtils:registerAspectJAnnotationAutoProxyCreatorIfNecessary
+    activate AopNamespaceUtils
+        AopNamespaceUtils->AopConfigUtils:registerAspectJAnnotationAutoProxyCreatorIfNecessary
+        activate AopConfigUtils
+            AopConfigUtils->AopConfigUtils:registerOrEscalateApcAsRequired
+            activate AopConfigUtils
+                AopConfigUtils->RootBeanDefinition:<create>
+                activate RootBeanDefinition
+                AopConfigUtils<--RootBeanDefinition: 创建bean实例
+                deactivate RootBeanDefinition
+
+                AopConfigUtils->DefaultListableBeanFactory:registerBeanDefinition
+                activate DefaultListableBeanFactory
+                AopConfigUtils<--DefaultListableBeanFactory: 注册beanName 为 internalAutoProxyCreator
+                deactivate DefaultListableBeanFactory
+
+            AopConfigUtils<--AopConfigUtils:
+            deactivate AopConfigUtils
+        AopNamespaceUtils<--AopConfigUtils:注册或升级AutoProxyCreator
+        deactivate AopConfigUtils
+
+        AopNamespaceUtils->AopNamespaceUtils:useClassProxyingIfNecessary
+        activate AopNamespaceUtils
+        AopNamespaceUtils<--AopNamespaceUtils:处理proxy-target-class和expose-proxy属性
+        deactivate AopNamespaceUtils
+
+        AopNamespaceUtils->AopNamespaceUtils:registerComponentIfNecessary
+        activate AopNamespaceUtils
+        AopNamespaceUtils<--AopNamespaceUtils:注册组件并通知
+        deactivate AopNamespaceUtils
+
+    AspectJAutoProxyBeanDefinitionParser<--AopNamespaceUtils: 注册AnnotationAwareAspectJAutoProxyCreator
+    deactivate AopNamespaceUtils
+AspectJAutoProxyBeanDefinitionParser <-- AspectJAutoProxyBeanDefinitionParser:
+deactivate AspectJAutoProxyBeanDefinitionParser
+
+@enduml

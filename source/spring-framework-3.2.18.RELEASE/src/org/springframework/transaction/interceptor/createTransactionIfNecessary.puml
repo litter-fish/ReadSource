@@ -1,0 +1,136 @@
+@startuml
+
+TransactionAspectSupport->TransactionAspectSupport:createTransactionIfNecessary
+activate TransactionAspectSupport
+    TransactionAspectSupport->AbstractPlatformTransactionManager:getTransaction
+    activate AbstractPlatformTransactionManager
+
+        AbstractPlatformTransactionManager->DataSourceTransactionManager:doGetTransaction
+        activate DataSourceTransactionManager
+            DataSourceTransactionManager->DataSourceTransactionObject:<create>
+            activate DataSourceTransactionObject
+            DataSourceTransactionManager<--DataSourceTransactionObject:
+            deactivate DataSourceTransactionObject
+
+            DataSourceTransactionManager->DataSourceTransactionObject:setSavepointAllowed
+            activate DataSourceTransactionObject
+            DataSourceTransactionManager<--DataSourceTransactionObject:保存点设置
+            deactivate DataSourceTransactionObject
+
+            DataSourceTransactionManager->DataSourceTransactionObject:setConnectionHolder
+            activate DataSourceTransactionObject
+            DataSourceTransactionManager<--DataSourceTransactionObject:绑定连接到当前线程
+            deactivate DataSourceTransactionObject
+
+        AbstractPlatformTransactionManager<--DataSourceTransactionManager:
+        deactivate DataSourceTransactionManager
+
+        alt 当前线程已经持有连接
+            AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:handleExistingTransaction
+            activate AbstractPlatformTransactionManager
+            AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+            deactivate AbstractPlatformTransactionManager
+        else 线程不存在连接
+            alt 事务传播行为：MANDATORY
+                note left of AbstractPlatformTransactionManager #aqua
+                	抛出不存在事务异常
+                end note
+            else 事务传播行为：REQUIRED、REQUIRES_NEW、NESTED
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:suspend
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+                deactivate AbstractPlatformTransactionManager
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:newTransactionStatus
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+                deactivate AbstractPlatformTransactionManager
+
+                AbstractPlatformTransactionManager->DataSourceTransactionManager:doBegin
+                activate DataSourceTransactionManager
+                    DataSourceTransactionManager->DataSourceTransactionObject:setConnectionHolder
+                    activate DataSourceTransactionObject
+                    DataSourceTransactionManager<--DataSourceTransactionObject:设置数据库连接持有线程
+                    deactivate DataSourceTransactionObject
+
+                    DataSourceTransactionManager->ConnectionHolder:setSynchronizedWithTransaction
+                    activate ConnectionHolder
+                    DataSourceTransactionManager<--ConnectionHolder:设置数据库连接同步标识
+                    deactivate ConnectionHolder
+
+                    DataSourceTransactionManager->ConnectionHolder:getConnection
+                    activate ConnectionHolder
+                    DataSourceTransactionManager<--ConnectionHolder:获取数据库连接
+                    deactivate ConnectionHolder
+
+                    DataSourceTransactionManager->DataSourceUtils:prepareConnectionForTransaction
+                    activate DataSourceUtils
+                    DataSourceTransactionManager<--DataSourceUtils:设置数据库连接的只读标识、隔离级别
+                    deactivate DataSourceUtils
+
+                    DataSourceTransactionManager->DataSourceTransactionObject:setPreviousIsolationLevel
+                    activate DataSourceTransactionObject
+                    DataSourceTransactionManager<--DataSourceTransactionObject:设置事务隔离级别
+                    deactivate DataSourceTransactionObject
+
+                    DataSourceTransactionManager->DataSourceTransactionObject:setMustRestoreAutoCommit
+                    activate DataSourceTransactionObject
+                    DataSourceTransactionManager<--DataSourceTransactionObject:更改自动提交模式，由spring控制提交
+                    deactivate DataSourceTransactionObject
+
+                    DataSourceTransactionManager->ConnectionHolder:setTransactionActive
+                    activate ConnectionHolder
+                    DataSourceTransactionManager<--ConnectionHolder:设置事务激活状态
+                    deactivate ConnectionHolder
+
+                    DataSourceTransactionManager->ConnectionHolder:setTimeoutInSeconds
+                    activate ConnectionHolder
+                    DataSourceTransactionManager<--ConnectionHolder:设置数据库连接过期时间
+                    deactivate ConnectionHolder
+
+                    DataSourceTransactionManager->TransactionSynchronizationManager:bindResource
+                    activate TransactionSynchronizationManager
+                    DataSourceTransactionManager<--TransactionSynchronizationManager:绑定数据库连接到当前线程
+                    deactivate TransactionSynchronizationManager
+
+                AbstractPlatformTransactionManager<--DataSourceTransactionManager:
+                deactivate DataSourceTransactionManager
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:prepareSynchronization
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+                deactivate AbstractPlatformTransactionManager
+
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:resume
+                activate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+                deactivate AbstractPlatformTransactionManager
+            else 事务传播行为：NOT_SUPPORT、SUPPORT
+                AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:prepareTransactionStatus
+                activate AbstractPlatformTransactionManager
+                    AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:newTransactionStatus
+                    activate AbstractPlatformTransactionManager
+                    AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager: 创建事务
+                    deactivate AbstractPlatformTransactionManager
+                    AbstractPlatformTransactionManager->AbstractPlatformTransactionManager:prepareSynchronization
+                    activate AbstractPlatformTransactionManager
+                    AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager: 将事务信息记录到当前线程
+                    deactivate AbstractPlatformTransactionManager
+                AbstractPlatformTransactionManager<--AbstractPlatformTransactionManager:
+                deactivate AbstractPlatformTransactionManager
+            end
+        end
+
+
+    TransactionAspectSupport<--AbstractPlatformTransactionManager:获取事务
+    deactivate AbstractPlatformTransactionManager
+
+    TransactionAspectSupport->TransactionAspectSupport:prepareTransactionInfo
+    activate TransactionAspectSupport
+    TransactionAspectSupport<--TransactionAspectSupport:准备事务信息
+    deactivate TransactionAspectSupport
+
+TransactionAspectSupport<--TransactionAspectSupport:创建事务
+deactivate TransactionAspectSupport
+
+@enduml
