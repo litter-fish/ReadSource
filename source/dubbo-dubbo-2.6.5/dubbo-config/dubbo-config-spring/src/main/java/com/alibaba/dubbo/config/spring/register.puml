@@ -1,0 +1,52 @@
+@startuml
+
+RegistryProtocol->RegistryProtocol:register
+activate RegistryProtocol
+    RegistryProtocol->AbstractRegistryFactory:getRegistry
+    activate AbstractRegistryFactory
+        AbstractRegistryFactory->ZookeeperRegistryFactory:createRegistry
+        activate ZookeeperRegistryFactory
+            ZookeeperRegistryFactory->ZookeeperRegistry:<create>
+            activate ZookeeperRegistry
+                ZookeeperRegistry->CuratorZookeeperTransporter:connect
+                activate CuratorZookeeperTransporter
+                    CuratorZookeeperTransporter->CuratorZookeeperClient:<create>
+                    activate CuratorZookeeperClient
+                        CuratorZookeeperClient->CuratorFramework:start
+                        activate CuratorFramework
+                        CuratorZookeeperClient<--CuratorFramework:启动客户端
+                        deactivate CuratorFramework
+                    CuratorZookeeperTransporter<--CuratorZookeeperClient:
+                    deactivate CuratorZookeeperClient
+                ZookeeperRegistry<--CuratorZookeeperTransporter:创建 Zookeeper 客户端
+                deactivate CuratorZookeeperTransporter
+            ZookeeperRegistryFactory<--ZookeeperRegistry:
+            deactivate ZookeeperRegistry
+        AbstractRegistryFactory<--ZookeeperRegistryFactory:
+        deactivate ZookeeperRegistryFactory
+    RegistryProtocol<--AbstractRegistryFactory:
+    deactivate AbstractRegistryFactory
+    RegistryProtocol->FailbackRegistry:register
+    activate FailbackRegistry
+        FailbackRegistry->ZookeeperRegistry:doRegister
+        activate ZookeeperRegistry
+            ZookeeperRegistry->AbstractZookeeperClient:create
+            activate AbstractZookeeperClient
+                AbstractZookeeperClient->CuratorZookeeperClient:createPersistent、createEphemeral
+                activate CuratorZookeeperClient
+                    CuratorZookeeperClient->CuratorFramework:create
+                    activate CuratorFramework
+                    CuratorZookeeperClient<--CuratorFramework:
+                    deactivate CuratorFramework
+                AbstractZookeeperClient<--CuratorZookeeperClient:创建临时或持久节点
+                deactivate CuratorZookeeperClient
+            ZookeeperRegistry<--AbstractZookeeperClient:
+            deactivate AbstractZookeeperClient
+        FailbackRegistry<--ZookeeperRegistry:
+        deactivate ZookeeperRegistry
+    RegistryProtocol<--FailbackRegistry:
+    deactivate FailbackRegistry
+RegistryProtocol<--RegistryProtocol:注册服务
+deactivate RegistryProtocol
+
+@enduml

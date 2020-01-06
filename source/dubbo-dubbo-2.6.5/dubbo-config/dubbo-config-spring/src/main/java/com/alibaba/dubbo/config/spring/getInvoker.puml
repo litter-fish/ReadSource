@@ -1,0 +1,54 @@
+@startuml
+
+ServiceConfig->JavassistProxyFactory:getInvoker
+activate JavassistProxyFactory
+    JavassistProxyFactory->Wrapper:getWrapper
+    activate Wrapper
+        Wrapper->Wrapper:makeWrapper
+        activate Wrapper
+            Wrapper->ClassGenerator:newInstance
+            activate ClassGenerator
+            Wrapper<--ClassGenerator:创建类生成器
+            deactivate ClassGenerator
+            Wrapper->ClassGenerator:setClassName
+            activate ClassGenerator
+            Wrapper<--ClassGenerator:设置类名
+            deactivate ClassGenerator
+
+            Wrapper->ClassGenerator:setSuperClass
+            activate ClassGenerator
+            Wrapper<--ClassGenerator:设置超类
+            deactivate ClassGenerator
+            Wrapper->ClassGenerator:addDefaultConstructor
+            activate ClassGenerator
+            Wrapper<--ClassGenerator:添加默认构造方法
+            deactivate ClassGenerator
+
+            Wrapper->ClassGenerator:addField
+            activate ClassGenerator
+            Wrapper<--ClassGenerator:添加字段
+            deactivate ClassGenerator
+            Wrapper->ClassGenerator:addMethod
+            activate ClassGenerator
+            Wrapper<--ClassGenerator:添加方法代码
+            deactivate ClassGenerator
+
+            Wrapper->Class: newInstance
+            activate Class
+            Wrapper<--Class:反射创建对象
+            deactivate Class
+
+        Wrapper<--Wrapper:创建 Wrapper
+        deactivate Wrapper
+
+        Wrapper->AbstractProxyInvoker: new AbstractProxyInvoker()
+        activate AbstractProxyInvoker
+        Wrapper<--AbstractProxyInvoker:创建匿名 Invoker 类对象，并实现 doInvoke 方法。
+        deactivate AbstractProxyInvoker
+
+    JavassistProxyFactory<--Wrapper:
+    deactivate Wrapper
+ServiceConfig<--JavassistProxyFactory:
+deactivate JavassistProxyFactory
+
+@enduml

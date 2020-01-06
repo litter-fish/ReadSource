@@ -1,0 +1,50 @@
+@startuml
+
+ServiceConfig->RegistryProtocol:export
+activate RegistryProtocol
+
+    RegistryProtocol->FailbackRegistry:subscribe
+    activate FailbackRegistry
+
+        FailbackRegistry->ZookeeperRegistry:doSubscribe
+        activate ZookeeperRegistry
+
+            ZookeeperRegistry->ZookeeperRegistry:notify
+            activate ZookeeperRegistry
+                ZookeeperRegistry->FailbackRegistry:doNotify
+                activate FailbackRegistry
+
+                    FailbackRegistry->AbstractRegistry:notify
+                    activate AbstractRegistry
+                        AbstractRegistry->AbstractRegistry:saveProperties
+                        activate AbstractRegistry
+
+                            AbstractRegistry->AbstractRegistry:saveProperties
+                            activate AbstractRegistry
+                                AbstractRegistry->AbstractRegistry:doSaveProperties
+                                activate AbstractRegistry
+                                AbstractRegistry<--AbstractRegistry:更新缓存文件
+                                deactivate AbstractRegistry
+                            AbstractRegistry<--AbstractRegistry:更新本地的缓存文件
+                            deactivate AbstractRegistry
+
+                        AbstractRegistry<--AbstractRegistry:
+                        deactivate AbstractRegistry
+                    FailbackRegistry<--AbstractRegistry:
+                    deactivate AbstractRegistry
+
+                ZookeeperRegistry<--FailbackRegistry:
+                deactivate FailbackRegistry
+            ZookeeperRegistry<--ZookeeperRegistry:更新缓存
+            deactivate ZookeeperRegistry
+
+        FailbackRegistry<--ZookeeperRegistry:发送订阅请求给服务器
+        deactivate ZookeeperRegistry
+
+    RegistryProtocol<--FailbackRegistry:订阅节点变更事件
+    deactivate FailbackRegistry
+
+ServiceConfig<--RegistryProtocol:导出服务
+deactivate RegistryProtocol
+
+@enduml

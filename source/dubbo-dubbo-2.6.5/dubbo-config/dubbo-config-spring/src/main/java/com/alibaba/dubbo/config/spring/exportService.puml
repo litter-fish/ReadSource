@@ -1,0 +1,73 @@
+@startuml
+
+ServiceBean -> ServiceBean: onApplicationEvent
+activate ServiceBean
+
+    ServiceBean->ServiceConfig: export
+    activate ServiceConfig
+
+        ServiceConfig->ServiceConfig: doExport
+        activate ServiceConfig
+
+           ServiceConfig->ServiceConfig: doExportUrls
+           activate ServiceConfig
+
+                ServiceConfig->ServiceConfig: doExportUrlsFor1Protocol
+                activate ServiceConfig
+
+                    ServiceConfig->JavassistProxyFactory:getInvoker
+                    activate JavassistProxyFactory
+                    ServiceConfig<--JavassistProxyFactory:
+                    deactivate JavassistProxyFactory
+
+                    ServiceConfig->RegistryProtocol:export
+                    activate RegistryProtocol
+                        RegistryProtocol->RegistryProtocol:doLocalExport
+                        activate RegistryProtocol
+                            RegistryProtocol->DubboProtocol:export
+                            activate DubboProtocol
+                                DubboProtocol->DubboProtocol:openServer
+                                activate DubboProtocol
+                                    DubboProtocol->DubboProtocol:createServer
+                                    activate DubboProtocol
+                                    DubboProtocol<--DubboProtocol:创建服务器实例
+                                    deactivate DubboProtocol
+                                DubboProtocol<--DubboProtocol
+                                deactivate DubboProtocol
+                            RegistryProtocol<--DubboProtocol:
+                            deactivate DubboProtocol
+                        RegistryProtocol<--RegistryProtocol: 导出服务，并生成 Exporter
+                        deactivate RegistryProtocol
+
+                        RegistryProtocol->RegistryProtocol:register
+                        activate RegistryProtocol
+                            RegistryProtocol->FailbackRegistry:register
+                            activate FailbackRegistry
+                                FailbackRegistry->ZookeeperRegistry:doRegister
+                                activate ZookeeperRegistry
+                                FailbackRegistry<--ZookeeperRegistry:
+                                deactivate ZookeeperRegistry
+                            RegistryProtocol<--FailbackRegistry:
+                            deactivate FailbackRegistry
+                        RegistryProtocol<--RegistryProtocol:注册服务
+                        deactivate RegistryProtocol
+
+                    ServiceConfig<--RegistryProtocol:
+                    deactivate RegistryProtocol
+
+                ServiceConfig<--ServiceConfig:
+                deactivate ServiceConfig
+
+           ServiceConfig<--ServiceConfig:
+           deactivate ServiceConfig
+
+        ServiceConfig<--ServiceConfig:
+        deactivate ServiceConfig
+
+    ServiceBean<--ServiceConfig:
+    deactivate ServiceConfig
+
+ServiceBean <-- ServiceBean:
+deactivate ServiceBean
+
+@enduml

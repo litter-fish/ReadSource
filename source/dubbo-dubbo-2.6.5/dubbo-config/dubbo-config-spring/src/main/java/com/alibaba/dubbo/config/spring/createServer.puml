@@ -1,0 +1,63 @@
+@startuml
+
+DubboProtocol->DubboProtocol:createServer
+activate DubboProtocol
+    DubboProtocol->URL:addParameterIfAbsent
+    activate URL
+    DubboProtocol<--URL:添加配置到 url 中
+    deactivate URL
+
+    DubboProtocol->Exchangers:bind
+    activate Exchangers
+        Exchangers->HeaderExchanger:bind
+        activate HeaderExchanger
+
+            HeaderExchanger->HeaderExchangeHandler:<create>
+            activate HeaderExchangeHandler
+            HeaderExchanger<--HeaderExchangeHandler: new HeaderExchangeHandler()
+            deactivate HeaderExchangeHandler
+
+            HeaderExchanger->DecodeHandler:<create>
+            activate DecodeHandler
+            HeaderExchanger<--DecodeHandler:new DecodeHandler(new HeaderExchangeHandler())
+            deactivate DecodeHandler
+
+            HeaderExchanger->Transporters:bind
+            activate Transporters
+                Transporters->ChannelHandlerDispatcher:<create>
+                activate ChannelHandlerDispatcher
+                    ChannelHandlerDispatcher->NettyTransporter:bind
+                    activate NettyTransporter
+                        NettyTransporter->NettyServer:<create>
+                        activate NettyServer
+                            NettyServer->AbstractServer:super
+                            activate AbstractServer
+                                AbstractServer->NettyServer:doOpen
+                                activate NettyServer
+                                AbstractServer<--NettyServer:启动netty服务器
+                                deactivate NettyServer
+                            NettyServer<--AbstractServer:
+                            deactivate AbstractServer
+                        NettyTransporter<--NettyServer:
+                        deactivate NettyServer
+                    ChannelHandlerDispatcher<--NettyTransporter:
+                    deactivate NettyTransporter
+                Transporters<--ChannelHandlerDispatcher:
+                deactivate ChannelHandlerDispatcher
+            HeaderExchanger<--Transporters:
+            deactivate Transporters
+
+            HeaderExchanger->HeaderExchangeServer:<create>
+            activate HeaderExchangeServer
+            HeaderExchanger<--HeaderExchangeServer:
+            deactivate HeaderExchangeServer
+
+        Exchangers<--HeaderExchanger:
+        deactivate HeaderExchanger
+    DubboProtocol<--Exchangers:
+    deactivate Exchangers
+
+DubboProtocol<--DubboProtocol:
+deactivate DubboProtocol
+
+@enduml
