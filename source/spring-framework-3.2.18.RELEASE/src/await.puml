@@ -1,0 +1,132 @@
+@startuml
+
+ConditionObject -> ConditionObject: await
+activate ConditionObject
+
+    ConditionObject -> ConditionObject: addConditionWaiter
+    activate ConditionObject
+        alt 尾节点的waitStatus状态不为CONDITION
+            ConditionObject -> ConditionObject:unlinkCancelledWaiters
+            activate ConditionObject
+            ConditionObject --> ConditionObject:清理条件队列中取消等待的节点
+            deactivate ConditionObject
+        end
+
+        ConditionObject->Node:<create>
+        activate Node
+        ConditionObject<--Node:构造新节点，waitStatus为CONDITION
+        deactivate Node
+
+    ConditionObject --> ConditionObject:
+    deactivate ConditionObject
+
+    ConditionObject->AbstractQueuedSynchronizer:fullyRelease
+    activate AbstractQueuedSynchronizer
+        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:release
+        activate AbstractQueuedSynchronizer
+            AbstractQueuedSynchronizer->ReentrantLock:tryRelease
+            activate ReentrantLock
+            AbstractQueuedSynchronizer<--ReentrantLock:尝试释放锁
+            deactivate ReentrantLock
+            alt 释放锁成功
+                AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:unparkSuccessor
+                activate AbstractQueuedSynchronizer
+                AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:唤醒同步的后继节点
+                deactivate AbstractQueuedSynchronizer
+            end
+        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+        deactivate AbstractQueuedSynchronizer
+    ConditionObject<--AbstractQueuedSynchronizer:释放当前线程获取的锁
+    deactivate AbstractQueuedSynchronizer
+
+    loop 节点还在条件队列中
+        ConditionObject->AbstractQueuedSynchronizer:isOnSyncQueue
+        activate AbstractQueuedSynchronizer
+            ConditionObject->AbstractQueuedSynchronizer:findNodeFromTail
+            activate AbstractQueuedSynchronizer
+            ConditionObject<--AbstractQueuedSynchronizer:
+            deactivate AbstractQueuedSynchronizer
+        ConditionObject<--AbstractQueuedSynchronizer:节点是否被移入了同步队列
+        deactivate AbstractQueuedSynchronizer
+
+        ConditionObject->LockSupport:park
+        activate LockSupport
+        ConditionObject<--LockSupport:挂起当前线程，线程会阻塞在这里等待被唤醒，不再往下执行
+        deactivate LockSupport
+
+        alt 线程被唤醒
+            ConditionObject->ConditionObject:checkInterruptWhileWaiting
+            activate ConditionObject
+                ConditionObject->Thread:interrupted
+                activate Thread
+                ConditionObject<--Thread:获取当前线程的中断标识状态，并重置中断标识为false
+                deactivate Thread
+                alt 发生过中断
+                    ConditionObject->AbstractQueuedSynchronizer:transferAfterCancelledWait
+                    activate AbstractQueuedSynchronizer
+                        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetWaitStatus
+                        activate AbstractQueuedSynchronizer
+                        note right of AbstractQueuedSynchronizer
+                            尝试CAS方式修改node的waitStatus为0，
+                            如果修改成功，表示是在signal操作之前发生的中断，
+                            这是因为，条件队列中的节点的waitStatus都为CONDITION，
+                            而同步队列中的节点的waitStatus不会为CONDITION，
+                            只会是0、SIGNAL、CANCELLED或PROPAGATE
+                        end note
+                        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:修改node的waitStatus为0
+                        deactivate AbstractQueuedSynchronizer
+
+                        alt CAS修改成功
+                            AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:enq
+                            activate AbstractQueuedSynchronizer
+                            AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:在signal操作之前发生的中断，则需要将节点转移到同步队列
+                            deactivate AbstractQueuedSynchronizer
+                        end
+                        alt 非signal操作之前发生的中断
+                            AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:isOnSyncQueue
+                            activate AbstractQueuedSynchronizer
+                            note right of AbstractQueuedSynchronizer
+                                在signal操作之后发生的中断，此时判断节点是否在同步队列中
+                                如果不在，说明此时节点虽然被signal尝试唤醒了，修改了waitStatus为0，
+                                但enq(node)操作还没有完成，
+                                即节点还没有顺利转移到同步队列，此时使当前线程（即被唤醒的线程）执行让步操作
+                            end note
+                            AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:节点是否在同步队列中
+                            deactivate AbstractQueuedSynchronizer
+                            alt 节点不在同步队列中
+                                AbstractQueuedSynchronizer->Thread:yield
+                                activate Thread
+                                AbstractQueuedSynchronizer<--Thread:执行让步
+                                deactivate Thread
+                            end
+                        end
+
+                    ConditionObject<--AbstractQueuedSynchronizer:判断中断操作是发生在signal唤醒之前还是之后
+                    deactivate AbstractQueuedSynchronizer
+                end
+            ConditionObject<--ConditionObject:中断检查
+            deactivate ConditionObject
+        end
+    end
+
+    alt 节点已从条件队列转移到同步队列中
+        ConditionObject->AbstractQueuedSynchronizer:acquireQueued
+        activate AbstractQueuedSynchronizer
+        ConditionObject<--AbstractQueuedSynchronizer:尝试获取锁，失败则加入同步队列队尾
+        deactivate AbstractQueuedSynchronizer
+
+        ConditionObject->ConditionObject:unlinkCancelledWaiters
+        activate ConditionObject
+        ConditionObject<--ConditionObject:清理条件队列中取消等待的节点
+        deactivate ConditionObject
+
+        ConditionObject->ConditionObject:reportInterruptAfterWait
+        activate ConditionObject
+        ConditionObject<--ConditionObject:处理产生的中断异常
+        deactivate ConditionObject
+    end
+
+ConditionObject --> ConditionObject:
+deactivate ConditionObject
+
+@enduml

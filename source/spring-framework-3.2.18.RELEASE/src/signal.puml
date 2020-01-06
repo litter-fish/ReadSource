@@ -1,0 +1,17 @@
+@startuml
+
+ConditionObject -> ConditionObject: signal
+activate ConditionObject
+
+    ConditionObject -> ConditionObject: doSignal
+    activate ConditionObject
+
+
+
+    ConditionObject --> ConditionObject:
+    deactivate ConditionObject
+
+ConditionObject --> ConditionObject:
+deactivate ConditionObject
+
+@enduml
