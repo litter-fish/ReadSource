@@ -1,0 +1,127 @@
+@startuml
+
+FactoryBean->ReferenceBean:getObject
+activate ReferenceBean
+    ReferenceBean->ReferenceConfig:get
+    activate ReferenceConfig
+        ReferenceConfig->ReferenceConfig:init
+        activate ReferenceConfig
+            ReferenceConfig->ReferenceConfig:createProxy
+            activate ReferenceConfig
+
+                ReferenceConfig->ProtocolFilterWrapper:refer
+                activate ProtocolFilterWrapper
+
+                    ProtocolFilterWrapper->ProtocolListenerWrapper:refer
+                    activate ProtocolListenerWrapper
+
+                        ProtocolListenerWrapper->RegistryProtocol:refer
+                        activate RegistryProtocol
+                            RegistryProtocol->RegistryProtocol:doRefer
+                            activate RegistryProtocol
+
+                                RegistryProtocol->FailbackRegistry:register
+                                activate FailbackRegistry
+                                    FailbackRegistry->ZookeeperRegistry:doRegister
+                                    activate ZookeeperRegistry
+                                    FailbackRegistry<--ZookeeperRegistry:创建consumers节点
+                                    deactivate ZookeeperRegistry
+                                RegistryProtocol<--FailbackRegistry:注册服务消费者
+                                deactivate FailbackRegistry
+                                RegistryProtocol->RegistryDirectory:subscribe
+                                note right: 订阅 providers、configurators、routers 等节点数据 note
+                                activate RegistryDirectory
+                                    RegistryDirectory->FailbackRegistry:subscribe
+                                    activate FailbackRegistry
+                                        FailbackRegistry->ZookeeperRegistry:doSubscribe
+                                        activate ZookeeperRegistry
+                                            ZookeeperRegistry->FailbackRegistry:notify
+                                            activate FailbackRegistry
+                                                FailbackRegistry->FailbackRegistry:doNotify
+                                                activate FailbackRegistry
+                                                    FailbackRegistry->AbstractRegistry:notify
+                                                    activate AbstractRegistry
+                                                        AbstractRegistry->AbstractRegistry:saveProperties
+                                                        activate AbstractRegistry
+                                                        AbstractRegistry<--AbstractRegistry:更新本地的缓存文件
+                                                        deactivate AbstractRegistry
+
+                                                        AbstractRegistry->RegistryDirectory:notify
+                                                        activate RegistryDirectory
+                                                            RegistryDirectory->RegistryDirectory:refreshInvoker
+                                                            activate RegistryDirectory
+                                                                RegistryDirectory->RegistryDirectory:toInvokers
+                                                                activate RegistryDirectory
+                                                                    RegistryDirectory->ProtocolFilterWrapper:refer
+                                                                    activate ProtocolFilterWrapper
+
+
+                                                                        ProtocolFilterWrapper->ProtocolListenerWrapper:refer
+                                                                        activate ProtocolListenerWrapper
+                                                                            ProtocolListenerWrapper->DubboProtocol:refer
+                                                                            activate DubboProtocol
+                                                                                DubboProtocol->DubboProtocol:getClients
+                                                                                activate DubboProtocol
+                                                                                    DubboProtocol->DubboProtocol:initClient
+                                                                                    activate DubboProtocol
+                                                                                    DubboProtocol<--DubboProtocol:初始化客户端
+                                                                                    deactivate DubboProtocol
+                                                                                DubboProtocol<--DubboProtocol:
+                                                                                deactivate DubboProtocol
+                                                                            ProtocolListenerWrapper<--DubboProtocol: 创建 DubboInvoker
+                                                                            deactivate DubboProtocol
+                                                                        ProtocolFilterWrapper<--ProtocolListenerWrapper:获取 Invoker
+                                                                        deactivate ProtocolListenerWrapper
+
+                                                                        ProtocolFilterWrapper->ProtocolFilterWrapper:buildInvokerChain
+                                                                        activate ProtocolFilterWrapper
+                                                                        ProtocolFilterWrapper<--ProtocolFilterWrapper:构建拦截器链
+                                                                        deactivate ProtocolFilterWrapper
+                                                                    RegistryDirectory<--ProtocolFilterWrapper:
+                                                                    deactivate ProtocolFilterWrapper
+                                                                RegistryDirectory<--RegistryDirectory:将 url 转成 Invoker
+                                                                deactivate RegistryDirectory
+                                                            RegistryDirectory<--RegistryDirectory:刷新 Invoker 列表
+                                                            deactivate RegistryDirectory
+                                                        AbstractRegistry<--RegistryDirectory:
+                                                        deactivate RegistryDirectory
+                                                    FailbackRegistry<--AbstractRegistry:
+                                                    deactivate AbstractRegistry
+                                                FailbackRegistry<--FailbackRegistry:
+                                                deactivate FailbackRegistry
+                                            ZookeeperRegistry<--FailbackRegistry:
+                                            deactivate FailbackRegistry
+                                        FailbackRegistry<--ZookeeperRegistry:
+                                        deactivate ZookeeperRegistry
+                                    RegistryDirectory<--FailbackRegistry:
+                                    deactivate FailbackRegistry
+
+                                RegistryProtocol<--RegistryDirectory:订阅节点数据
+                                deactivate RegistryDirectory
+
+                            RegistryProtocol<--RegistryProtocol:
+                            deactivate RegistryProtocol
+                        ProtocolListenerWrapper<--RegistryProtocol:
+                        deactivate RegistryProtocol
+
+                    ProtocolFilterWrapper<--ProtocolListenerWrapper:
+                    deactivate ProtocolListenerWrapper
+
+                ReferenceConfig<--ProtocolFilterWrapper:
+                deactivate ProtocolFilterWrapper
+            ReferenceConfig<--ReferenceConfig: 创建 invoker
+            deactivate ReferenceConfig
+
+            ReferenceConfig->ReferenceConfig:getProxy
+            activate ReferenceConfig
+
+            ReferenceConfig<--ReferenceConfig: 创建invoker代理
+            deactivate ReferenceConfig
+        ReferenceConfig<--ReferenceConfig:
+        deactivate ReferenceConfig
+    ReferenceBean<--ReferenceConfig:
+    deactivate ReferenceConfig
+FactoryBean<--ReferenceBean:
+deactivate ReferenceBean
+
+@enduml

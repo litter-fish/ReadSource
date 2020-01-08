@@ -149,10 +149,12 @@ public abstract class AbstractRegistry implements Registry {
         }
         // Save
         try {
+            // 创建锁文件
             File lockfile = new File(file.getAbsolutePath() + ".lock");
             if (!lockfile.exists()) {
                 lockfile.createNewFile();
             }
+            // 打开锁文件，确保只有一个线程能够创、删锁文件。
             RandomAccessFile raf = new RandomAccessFile(lockfile, "rw");
             try {
                 FileChannel channel = raf.getChannel();
@@ -168,6 +170,7 @@ public abstract class AbstractRegistry implements Registry {
                         }
                         FileOutputStream outputFile = new FileOutputStream(file);
                         try {
+                            // 写缓存内容
                             properties.store(outputFile, "Dubbo Registry Cache");
                         } finally {
                             outputFile.close();

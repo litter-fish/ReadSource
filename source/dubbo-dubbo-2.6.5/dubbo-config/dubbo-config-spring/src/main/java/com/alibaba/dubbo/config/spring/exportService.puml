@@ -15,45 +15,82 @@ activate ServiceBean
                 ServiceConfig->ServiceConfig: doExportUrlsFor1Protocol
                 activate ServiceConfig
 
-                    ServiceConfig->JavassistProxyFactory:getInvoker
-                    activate JavassistProxyFactory
-                    ServiceConfig<--JavassistProxyFactory:
-                    deactivate JavassistProxyFactory
+                    ServiceConfig->StubProxyFactoryWrapper:getInvoker
+                    activate StubProxyFactoryWrapper
+                        StubProxyFactoryWrapper->JavassistProxyFactory:getInvoker
+                        activate JavassistProxyFactory
+                            JavassistProxyFactory->Wrapper:getWrapper
+                            activate Wrapper
+                            JavassistProxyFactory<--Wrapper:创建目标类 Wrapper
+                            deactivate Wrapper
 
-                    ServiceConfig->RegistryProtocol:export
-                    activate RegistryProtocol
-                        RegistryProtocol->RegistryProtocol:doLocalExport
-                        activate RegistryProtocol
-                            RegistryProtocol->DubboProtocol:export
-                            activate DubboProtocol
-                                DubboProtocol->DubboProtocol:openServer
-                                activate DubboProtocol
-                                    DubboProtocol->DubboProtocol:createServer
-                                    activate DubboProtocol
-                                    DubboProtocol<--DubboProtocol:创建服务器实例
-                                    deactivate DubboProtocol
-                                DubboProtocol<--DubboProtocol
-                                deactivate DubboProtocol
-                            RegistryProtocol<--DubboProtocol:
-                            deactivate DubboProtocol
-                        RegistryProtocol<--RegistryProtocol: 导出服务，并生成 Exporter
-                        deactivate RegistryProtocol
+                            JavassistProxyFactory->AbstractProxyInvoker:<create>
+                            activate AbstractProxyInvoker
+                            JavassistProxyFactory<--AbstractProxyInvoker:
+                            deactivate AbstractProxyInvoker
+                        StubProxyFactoryWrapper<--JavassistProxyFactory:
+                        deactivate JavassistProxyFactory
+                    ServiceConfig<--StubProxyFactoryWrapper:为服务提供类(ref)生成 Invoker
+                    deactivate StubProxyFactoryWrapper
 
-                        RegistryProtocol->RegistryProtocol:register
-                        activate RegistryProtocol
-                            RegistryProtocol->FailbackRegistry:register
-                            activate FailbackRegistry
-                                FailbackRegistry->ZookeeperRegistry:doRegister
-                                activate ZookeeperRegistry
-                                FailbackRegistry<--ZookeeperRegistry:
-                                deactivate ZookeeperRegistry
-                            RegistryProtocol<--FailbackRegistry:
-                            deactivate FailbackRegistry
-                        RegistryProtocol<--RegistryProtocol:注册服务
-                        deactivate RegistryProtocol
+                    ServiceConfig->ProtocolFilterWrapper:export
+                    activate ProtocolFilterWrapper
 
-                    ServiceConfig<--RegistryProtocol:
-                    deactivate RegistryProtocol
+                        ProtocolFilterWrapper->ProtocolListenerWrapper:export
+                        activate ProtocolListenerWrapper
+
+                            ProtocolListenerWrapper->RegistryProtocol:export
+                            activate RegistryProtocol
+
+                                RegistryProtocol->RegistryProtocol:doLocalExport
+                                activate RegistryProtocol
+
+                                    RegistryProtocol->ProtocolFilterWrapper:export
+                                    activate ProtocolFilterWrapper
+
+                                        ProtocolFilterWrapper->ProtocolFilterWrapper:buildInvokerChain
+                                        activate ProtocolFilterWrapper
+                                        ProtocolFilterWrapper<--ProtocolFilterWrapper:构造拦截器链
+                                        deactivate ProtocolFilterWrapper
+
+                                        ProtocolFilterWrapper->ProtocolListenerWrapper:export
+                                        activate ProtocolListenerWrapper
+                                            ProtocolListenerWrapper->DubboProtocol:export
+                                            activate DubboProtocol
+                                                DubboProtocol->DubboProtocol:openServer
+                                                activate DubboProtocol
+                                                DubboProtocol<--DubboProtocol:启动服务器
+                                                deactivate DubboProtocol
+                                            ProtocolListenerWrapper<--DubboProtocol:导出dubbo服务
+                                            deactivate DubboProtocol
+                                        ProtocolFilterWrapper<--ProtocolListenerWrapper:
+                                        deactivate ProtocolListenerWrapper
+
+                                    RegistryProtocol<--ProtocolFilterWrapper:
+                                    deactivate ProtocolFilterWrapper
+
+                                RegistryProtocol<--RegistryProtocol:
+                                deactivate RegistryProtocol
+
+                                RegistryProtocol->RegistryProtocol: register
+                                activate RegistryProtocol
+
+                                RegistryProtocol<--RegistryProtocol:注册服务
+                                deactivate RegistryProtocol
+
+                                RegistryProtocol->FailbackRegistry:subscribe
+                                activate FailbackRegistry
+                                RegistryProtocol<--FailbackRegistry:订阅 override 数据
+                                deactivate FailbackRegistry
+
+                            ProtocolListenerWrapper<--RegistryProtocol:
+                            deactivate RegistryProtocol
+
+                        ProtocolFilterWrapper<--ProtocolListenerWrapper:
+                        deactivate ProtocolListenerWrapper
+
+                    ServiceConfig<--ProtocolFilterWrapper:导出服务，打开一个TCP长连接
+                    deactivate ProtocolFilterWrapper
 
                 ServiceConfig<--ServiceConfig:
                 deactivate ServiceConfig

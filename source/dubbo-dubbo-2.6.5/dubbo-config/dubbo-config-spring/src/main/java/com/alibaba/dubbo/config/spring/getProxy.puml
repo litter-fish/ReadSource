@@ -1,0 +1,69 @@
+@startuml
+
+ReferenceConfig->ReferenceConfig:getProxy
+    activate ReferenceConfig
+        ReferenceConfig->StubProxyFactoryWrapper:getProxy
+        activate StubProxyFactoryWrapper
+            StubProxyFactoryWrapper->AbstractProxyFactory:getProxy
+            activate AbstractProxyFactory
+                AbstractProxyFactory->AbstractProxyFactory:getProxy
+                activate AbstractProxyFactory
+                    AbstractProxyFactory->JavassistProxyFactory:getProxy
+                    activate JavassistProxyFactory
+                        JavassistProxyFactory->Proxy:getProxy
+                        activate Proxy
+                            Proxy->Proxy:getProxy
+                            activate Proxy
+                                Proxy->ClassGenerator:newInstance
+                                activate ClassGenerator
+                                Proxy<--ClassGenerator:
+                                deactivate ClassGenerator
+
+                                Proxy->ClassGenerator:setClassName
+                                activate ClassGenerator
+                                Proxy<--ClassGenerator:
+                                deactivate ClassGenerator
+
+                                Proxy->ClassGenerator:addDefaultConstructor
+                                activate ClassGenerator
+                                Proxy<--ClassGenerator:
+                                deactivate ClassGenerator
+
+                                Proxy->ClassGenerator:setSuperClass
+                                activate ClassGenerator
+                                Proxy<--ClassGenerator:
+                                deactivate ClassGenerator
+
+                                Proxy->ClassGenerator:addMethod
+                                activate ClassGenerator
+                                Proxy<--ClassGenerator:
+                                deactivate ClassGenerator
+
+                                Proxy->Class:newInstance
+                                activate Class
+                                Proxy<--Class:
+                                deactivate Class
+
+                            Proxy<--Proxy:
+                            deactivate Proxy
+                        JavassistProxyFactory<--Proxy:
+                        deactivate Proxy
+
+                        JavassistProxyFactory->Proxy:newInstance
+                        activate Proxy
+                        JavassistProxyFactory<--Proxy:
+                        deactivate Proxy
+                    AbstractProxyFactory<--JavassistProxyFactory:
+                    deactivate JavassistProxyFactory
+                AbstractProxyFactory<--AbstractProxyFactory:
+                deactivate AbstractProxyFactory
+            StubProxyFactoryWrapper<--AbstractProxyFactory:
+            deactivate AbstractProxyFactory
+        ReferenceConfig<--StubProxyFactoryWrapper:
+        deactivate StubProxyFactoryWrapper
+    ReferenceConfig<--ReferenceConfig:
+    deactivate ReferenceConfig
+ReferenceConfig<--ReferenceConfig:
+deactivate ReferenceConfig
+
+@enduml

@@ -1,0 +1,83 @@
+@startuml
+DubboProtocol->DubboProtocol:getClients
+activate DubboProtocol
+    DubboProtocol->DubboProtocol:getSharedClient
+        activate DubboProtocol
+        DubboProtocol->DubboProtocol:initClient
+        activate DubboProtocol
+            DubboProtocol->Exchangers:connect
+            activate Exchangers
+                Exchangers->HeaderExchanger:connect
+                activate HeaderExchanger
+                    HeaderExchanger->Transporters:connect
+                    activate Transporters
+                        Transporters->NettyTransporter:connect
+                        activate NettyTransporter
+                            NettyTransporter->NettyClient:<init>
+                            activate NettyClient
+                                NettyClient->AbstractClient:wrapChannelHandler
+                                activate AbstractClient
+                                    AbstractClient->ChannelHandlers:wrap
+                                    activate ChannelHandlers
+                                        ChannelHandlers->ChannelHandlers:wrapInternal
+                                        activate ChannelHandlers
+                                        note left of ChannelHandlers: handler = MultiMessageHandler->HeartbeatHandler->AllChannelHandler->DecodeHandler->HeaderExchangeHandler->DubboProtocol
+                                        ChannelHandlers<--ChannelHandlers: 包装handler
+                                        deactivate ChannelHandlers
+                                    AbstractClient<--ChannelHandlers:
+                                    deactivate ChannelHandlers
+                                NettyClient<--AbstractClient:
+                                deactivate AbstractClient
+
+                                NettyClient->AbstractClient:<init>
+                                activate AbstractClient
+                                    AbstractClient->NettyClient:doOpen
+                                    activate NettyClient
+                                        NettyClient->ClientBootstrap:<init>
+                                        activate ClientBootstrap
+                                        NettyClient<--ClientBootstrap:
+                                        deactivate ClientBootstrap
+                                        NettyClient->ClientBootstrap:setOption
+                                        activate ClientBootstrap
+                                        note left of ClientBootstrap: 设置keepAlive、tcpNoDelay、connectTimeoutMillis
+                                        NettyClient<--ClientBootstrap:
+                                        deactivate ClientBootstrap
+                                        NettyClient->ClientBootstrap:setPipelineFactory
+                                        activate ClientBootstrap
+                                        note left of ClientBootstrap:添加各种 pipeline：decoder、encoder、handler
+                                        NettyClient<--ClientBootstrap:
+                                        deactivate ClientBootstrap
+                                    AbstractClient<--NettyClient:
+                                    deactivate NettyClient
+
+                                    AbstractClient->AbstractClient:connect
+                                    activate AbstractClient
+                                        AbstractClient->NettyClient:doConnect
+                                        activate NettyClient
+                                            NettyClient->ClientBootstrap:connect
+                                            activate ClientBootstrap
+                                            NettyClient<--ClientBootstrap:
+                                            deactivate ClientBootstrap
+                                        AbstractClient<--NettyClient:
+                                        deactivate NettyClient
+                                    AbstractClient<--AbstractClient:
+                                    deactivate AbstractClient
+                                 NettyClient<--AbstractClient:
+                                deactivate AbstractClient
+                            NettyTransporter<--NettyClient:
+                            deactivate NettyClient
+                        Transporters<--NettyTransporter:
+                        deactivate NettyTransporter
+                    HeaderExchanger<--Transporters:
+                    deactivate Transporters
+                Exchangers<--HeaderExchanger:
+                deactivate HeaderExchanger
+            DubboProtocol<--Exchangers:创建 ExchangeClient 实例
+            deactivate Exchangers
+        DubboProtocol<--DubboProtocol:初始化客户端
+        deactivate DubboProtocol
+    DubboProtocol<--DubboProtocol:获取共享客户端
+    deactivate DubboProtocol
+DubboProtocol<--DubboProtocol:
+deactivate DubboProtocol
+@enduml
