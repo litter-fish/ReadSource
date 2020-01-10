@@ -1,0 +1,55 @@
+@startuml
+
+AbstractClusterInvoker->FailoverClusterInvoker:doInvoke
+activate FailoverClusterInvoker
+
+    FailoverClusterInvoker ->AbstractClusterInvoker:list
+    activate AbstractClusterInvoker
+        note right of AbstractClusterInvoker:重试前重新列举 Invoker，第一次不需要重新列举
+        AbstractClusterInvoker->AbstractDirectory:list
+        activate AbstractDirectory
+            AbstractDirectory->RegistryDirectory:doList
+            activate RegistryDirectory
+            AbstractDirectory<--RegistryDirectory:列举 Invoker
+            deactivate RegistryDirectory
+        AbstractClusterInvoker<--AbstractDirectory:
+        deactivate AbstractDirectory
+    FailoverClusterInvoker<--AbstractClusterInvoker:获取最新可用的 Invoker 列表
+    deactivate AbstractClusterInvoker
+
+
+    FailoverClusterInvoker->AbstractClusterInvoker:select
+    activate AbstractClusterInvoker
+        AbstractClusterInvoker->AbstractClusterInvoker:doSelect
+        activate AbstractClusterInvoker
+            AbstractClusterInvoker->AbstractLoadBalance:select
+            activate AbstractLoadBalance
+                AbstractLoadBalance->RoundRobinLoadBalance:doSelect
+                activate RoundRobinLoadBalance
+                AbstractLoadBalance<--RoundRobinLoadBalance:负载均衡选择Invoker
+                deactivate RoundRobinLoadBalance
+            AbstractClusterInvoker<--AbstractLoadBalance:负载均衡组件选择 Invoker
+            deactivate AbstractLoadBalance
+
+            AbstractClusterInvoker->AbstractClusterInvoker:reselect
+            activate AbstractClusterInvoker
+                note right of AbstractClusterInvoker: 如果 selected 包含负载均衡选择出的 Invoker，或者该 Invoker 无法经过可用性检查，此时进行重选
+                AbstractClusterInvoker->AbstractLoadBalance:select
+                activate AbstractLoadBalance
+                    AbstractLoadBalance->RoundRobinLoadBalance:doSelect
+                    activate RoundRobinLoadBalance
+                    AbstractLoadBalance<--RoundRobinLoadBalance:负载均衡选择Invoker
+                    deactivate RoundRobinLoadBalance
+                AbstractClusterInvoker<--AbstractLoadBalance:负载均衡组件选择 Invoker
+                deactivate AbstractLoadBalance
+            AbstractClusterInvoker<--AbstractClusterInvoker:重选 Invoker
+            deactivate AbstractClusterInvoker
+
+
+        AbstractClusterInvoker<--AbstractClusterInvoker:
+        deactivate AbstractClusterInvoker
+    FailoverClusterInvoker<--AbstractClusterInvoker:
+    deactivate AbstractClusterInvoker
+AbstractClusterInvoker<--FailoverClusterInvoker:
+deactivate FailoverClusterInvoker
+@enduml

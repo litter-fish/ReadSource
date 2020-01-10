@@ -1,0 +1,80 @@
+@startuml
+
+proxy0->proxy0:sayHello
+activate proxy0
+    proxy0->InvokerInvocationHandler:invoke
+    activate InvokerInvocationHandler
+        InvokerInvocationHandler->MockClusterInvoker:invoke
+        activate MockClusterInvoker
+            MockClusterInvoker->AbstractClusterInvoker:invoke
+            activate AbstractClusterInvoker
+                AbstractClusterInvoker->AbstractClusterInvoker:list
+                activate AbstractClusterInvoker
+
+                AbstractClusterInvoker<--AbstractClusterInvoker:列出可用Invoker
+                deactivate AbstractClusterInvoker
+
+                AbstractClusterInvoker->FailoverClusterInvoker:doInvoke
+                activate FailoverClusterInvoker
+                    FailoverClusterInvoker->AbstractClusterInvoker:select
+                    activate AbstractClusterInvoker
+                    FailoverClusterInvoker<--AbstractClusterInvoker:负载均衡选择Invoke
+                    deactivate AbstractClusterInvoker
+
+                    FailoverClusterInvoker->InvokerWrapper:invoke
+                    activate InvokerWrapper
+                        InvokerWrapper->XXXFilter:invoke
+                        activate XXXFilter
+                            XXXFilter->ListenerInvokerWrapper:invoke
+                            activate ListenerInvokerWrapper
+                                ListenerInvokerWrapper->AbstractInvoker:invoke
+                                activate AbstractInvoker
+                                    AbstractInvoker->DubboInvoker:doInvoke
+                                    activate DubboInvoker
+                                        DubboInvoker->ReferenceCountExchangeClient:request
+                                        activate ReferenceCountExchangeClient
+                                            ReferenceCountExchangeClient->HeaderExchangeClient:request
+                                            activate HeaderExchangeClient
+                                                HeaderExchangeClient->HeaderExchangeChannel:request
+                                                activate HeaderExchangeChannel
+                                                    HeaderExchangeChannel->AbstractPeer:send
+                                                    activate AbstractPeer
+                                                        AbstractPeer->AbstractClient:send
+                                                        activate AbstractClient
+                                                            AbstractClient->NettyChannel:send
+                                                            activate NettyChannel
+                                                            AbstractClient<--NettyChannel:
+                                                            deactivate NettyChannel
+                                                        AbstractPeer<--AbstractClient:
+                                                        deactivate AbstractClient
+                                                    HeaderExchangeChannel<--AbstractPeer:
+                                                    deactivate AbstractPeer
+                                                HeaderExchangeClient<--HeaderExchangeChannel:
+                                                deactivate HeaderExchangeChannel
+                                            ReferenceCountExchangeClient<--HeaderExchangeClient:
+                                            deactivate HeaderExchangeClient
+                                        DubboInvoker<--ReferenceCountExchangeClient:
+                                        deactivate ReferenceCountExchangeClient
+                                    AbstractInvoker<--DubboInvoker:
+                                    deactivate DubboInvoker
+                                ListenerInvokerWrapper<--AbstractInvoker:
+                                deactivate AbstractInvoker
+                            XXXFilter<--ListenerInvokerWrapper:
+                            deactivate ListenerInvokerWrapper
+                        InvokerWrapper<--XXXFilter:Filter调用
+                        deactivate XXXFilter
+                    FailoverClusterInvoker<--InvokerWrapper:???
+                    deactivate InvokerWrapper
+
+                AbstractClusterInvoker<--FailoverClusterInvoker:
+                deactivate FailoverClusterInvoker
+            MockClusterInvoker<--AbstractClusterInvoker:
+            deactivate AbstractClusterInvoker
+        InvokerInvocationHandler->MockClusterInvoker:服务降级处理
+        deactivate MockClusterInvoker
+    proxy0<--InvokerInvocationHandler:
+    deactivate InvokerInvocationHandler
+proxy0<--proxy0:
+deactivate proxy0
+
+@enduml

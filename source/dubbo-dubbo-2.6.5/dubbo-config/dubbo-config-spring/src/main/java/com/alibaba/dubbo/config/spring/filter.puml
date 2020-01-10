@@ -1,0 +1,28 @@
+@startuml
+InvokerWrapper->ConsumerContextFilter:invoke
+activate ConsumerContextFilter
+    ConsumerContextFilter->ActiveLimitFilter:invoke
+    activate ActiveLimitFilter
+    note left ActiveLimitFilter:限制同一个客户端对于一个服务端方法的并发调用量
+        ActiveLimitFilter->FutureFilter:invoke
+        activate FutureFilter
+            FutureFilter->MonitorFilter:invoke
+            activate MonitorFilter
+                MonitorFilter->DeprecatedFilter:invoke
+                activate DeprecatedFilter
+                    DeprecatedFilter->CacheFilter:invoke
+                    activate CacheFilter
+
+                    DeprecatedFilter<--CacheFilter:缓存结果
+                    deactivate CacheFilter
+                MonitorFilter<--DeprecatedFilter:
+                deactivate DeprecatedFilter
+            FutureFilter<--MonitorFilter:monitor监控
+            deactivate MonitorFilter
+        ActiveLimitFilter<--FutureFilter:处理回调逻辑
+        deactivate FutureFilter
+    ConsumerContextFilter<--ActiveLimitFilter:
+    deactivate ActiveLimitFilter
+InvokerWrapper<--ConsumerContextFilter:记录调用的状态信息
+deactivate ConsumerContextFilter
+@enduml

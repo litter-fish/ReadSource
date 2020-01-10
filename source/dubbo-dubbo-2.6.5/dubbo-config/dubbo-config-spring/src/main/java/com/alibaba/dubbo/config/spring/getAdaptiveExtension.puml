@@ -1,0 +1,67 @@
+@startuml
+ExtensionLoader->ExtensionLoader:getAdaptiveExtension
+activate ExtensionLoader
+    ExtensionLoader->ExtensionLoader:createAdaptiveExtension
+    activate ExtensionLoader
+        ExtensionLoader->ExtensionLoader:getAdaptiveExtensionClass
+        activate ExtensionLoader
+            ExtensionLoader->ExtensionLoader:getExtensionClasses
+            activate ExtensionLoader
+                ExtensionLoader->ExtensionLoader:getAdaptiveExtensionClass
+                activate ExtensionLoader
+                    ExtensionLoader->ExtensionLoader:loadExtensionClasses
+                    activate ExtensionLoader
+                        ExtensionLoader->ExtensionLoader:loadDirectory
+                        activate ExtensionLoader
+                            ExtensionLoader->ExtensionLoader:loadResource
+                            activate ExtensionLoader
+                                ExtensionLoader->ExtensionLoader:loadClass
+                                activate ExtensionLoader
+                                ExtensionLoader<--ExtensionLoader:加载类
+                                deactivate ExtensionLoader
+                            ExtensionLoader<--ExtensionLoader:加载资源
+                            deactivate ExtensionLoader
+                        ExtensionLoader<--ExtensionLoader:加载目录
+                        deactivate ExtensionLoader
+                    ExtensionLoader<--ExtensionLoader:加载拓展类
+                    deactivate ExtensionLoader
+                ExtensionLoader<--ExtensionLoader:通过 SPI 获取所有的拓展类
+                deactivate ExtensionLoader
+
+                ExtensionLoader->ExtensionLoader:createAdaptiveExtensionClass
+                activate ExtensionLoader
+                    ExtensionLoader->ExtensionLoader:createAdaptiveExtensionClassCode
+                    activate ExtensionLoader
+                        ExtensionLoader->AdaptiveCompiler:compile
+                        activate AdaptiveCompiler
+                            AdaptiveCompiler->Class:forName
+                            activate Class
+                            AdaptiveCompiler<--Class:生成 Class
+                            deactivate Class
+                        ExtensionLoader<--AdaptiveCompiler:编译代码，生成 Class
+                        deactivate AdaptiveCompiler
+                    ExtensionLoader<--ExtensionLoader:构建自适应拓展代码
+                    deactivate ExtensionLoader
+                ExtensionLoader<--ExtensionLoader:创建自适应拓展类
+                deactivate ExtensionLoader
+
+            ExtensionLoader<--ExtensionLoader:
+            deactivate ExtensionLoader
+        ExtensionLoader<--ExtensionLoader:获取自适应拓展 Class 对象
+        deactivate ExtensionLoader
+
+        ExtensionLoader->Class:newInstance
+        activate Class
+        ExtensionLoader<--Class:通过反射进行实例化
+        deactivate Class
+
+        ExtensionLoader->ExtensionLoader:injectExtension
+        activate ExtensionLoader
+        ExtensionLoader<--ExtensionLoader:注入依赖
+        deactivate ExtensionLoader
+
+    ExtensionLoader<--ExtensionLoader:创建自适应拓展
+    deactivate ExtensionLoader
+ExtensionLoader<--ExtensionLoader:
+deactivate ExtensionLoader
+@enduml

@@ -1,0 +1,78 @@
+@startuml
+
+== 服务发生变更时，触发通知 ==
+
+RegistryDirectory->RegistryDirectory:notify
+activate RegistryDirectory
+    RegistryDirectory->RegistryDirectory:toConfigurators
+    activate RegistryDirectory
+    RegistryDirectory<--RegistryDirectory:
+    deactivate RegistryDirectory
+
+    RegistryDirectory->RegistryDirectory:toRouters
+    activate RegistryDirectory
+    RegistryDirectory<--RegistryDirectory:
+    deactivate RegistryDirectory
+
+    RegistryDirectory->AbstractDirectory:setRouters
+    activate AbstractDirectory
+    RegistryDirectory<--AbstractDirectory:
+    deactivate AbstractDirectory
+
+    RegistryDirectory->RegistryDirectory:refreshInvoker
+    activate RegistryDirectory
+        RegistryDirectory->RegistryDirectory:toInvokers
+        activate RegistryDirectory
+             RegistryDirectory->DubboProtocol:refer
+             activate DubboProtocol
+             RegistryDirectory<--DubboProtocol:调用 refer 获取 Invoker
+             deactivate DubboProtocol
+        RegistryDirectory<--RegistryDirectory:将 url 转成 Invoker
+        deactivate RegistryDirectory
+
+        RegistryDirectory->RegistryDirectory:toMethodInvokers
+        activate RegistryDirectory
+            RegistryDirectory->RegistryDirectory:route
+            activate RegistryDirectory
+                RegistryDirectory->ConditionRouter:route
+                activate ConditionRouter
+                RegistryDirectory<--ConditionRouter:
+                deactivate ConditionRouter
+            RegistryDirectory<--RegistryDirectory:进行服务级别路由
+            deactivate RegistryDirectory
+        RegistryDirectory<--RegistryDirectory:转换方法名到 Invoker 列表映射
+        deactivate RegistryDirectory
+
+        RegistryDirectory->RegistryDirectory:toMergeMethodInvokerMap
+        activate RegistryDirectory
+
+        RegistryDirectory<--RegistryDirectory:合并多个组的 Invoker
+        deactivate RegistryDirectory
+    RegistryDirectory<--RegistryDirectory:
+    deactivate RegistryDirectory
+RegistryDirectory<--RegistryDirectory:
+deactivate RegistryDirectory
+
+== 消费者调用服务时 ==
+
+AbstractClusterInvoker->AbstractClusterInvoker:list
+activate AbstractClusterInvoker
+    AbstractClusterInvoker->AbstractDirectory:list
+    activate AbstractDirectory
+        AbstractDirectory->RegistryDirectory:doList
+        activate RegistryDirectory
+
+        AbstractDirectory<--RegistryDirectory:列举 Invoker
+        deactivate RegistryDirectory
+
+        AbstractDirectory->ConditionRouter:route
+        activate ConditionRouter
+        AbstractDirectory<--ConditionRouter:服务路由
+        deactivate ConditionRouter
+
+    AbstractClusterInvoker<--AbstractDirectory:
+    deactivate AbstractDirectory
+AbstractClusterInvoker<--AbstractClusterInvoker:
+deactivate AbstractClusterInvoker
+
+@enduml
