@@ -276,7 +276,7 @@ public class Learner {
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(bsid);
         boa.writeRecord(li, "LearnerInfo");
         qp.setData(bsid.toByteArray());
-        
+        // 发送LearnerInfo信息
         writePacket(qp, true);
 
         // 阻塞直到leader发送LEADERINFO信息

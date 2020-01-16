@@ -1,0 +1,33 @@
+@startuml
+
+abstract class AbstractQueuedSynchronizer
+
+AbstractQueuedSynchronizer <|-- Sync
+
+Semaphore ...> Sync
+
+NonfairSync ---|> Sync
+FairSync ---|> Sync
+
+class Semaphore {
+    ~final Sync sync
+    +void acquire()
+    +void release(int permits)
+    +boolean tryAcquire()
+    +int availablePermits()
+    #void reducePermits(int reduction)
+}
+
+class Sync {
+    #int tryAcquireShared(int acquires)
+    #boolean tryReleaseShared(int releases)
+}
+
+class NonfairSync {
+    #int tryAcquireShared(int acquires)
+}
+
+class FairSync {
+    #int tryAcquireShared(int acquires)
+}
+@enduml

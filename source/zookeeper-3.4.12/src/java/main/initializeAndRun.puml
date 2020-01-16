@@ -1,0 +1,143 @@
+@startuml
+
+QuorumPeerMain -> QuorumPeerMain:main
+activate QuorumPeerMain
+    QuorumPeerMain -> QuorumPeerMain:<init>
+    activate QuorumPeerMain
+        QuorumPeerMain -> QuorumPeerMain:initializeAndRun
+        activate QuorumPeerMain
+            QuorumPeerMain->QuorumPeerConfig:<init>
+            activate QuorumPeerConfig
+            QuorumPeerMain<--QuorumPeerConfig:
+            deactivate QuorumPeerConfig
+
+            QuorumPeerMain->QuorumPeerConfig:parse
+            activate QuorumPeerConfig
+            QuorumPeerMain<--QuorumPeerConfig:解析配置文件 zoo.cfg
+            deactivate QuorumPeerConfig
+
+            QuorumPeerMain->DatadirCleanupManager:<init>
+            activate DatadirCleanupManager
+            QuorumPeerMain<--DatadirCleanupManager:创建历史文件清理器
+            deactivate DatadirCleanupManager
+
+            QuorumPeerMain->DatadirCleanupManager:start
+            activate DatadirCleanupManager
+                DatadirCleanupManager->PurgeTask:<init>
+                activate PurgeTask
+                DatadirCleanupManager<--PurgeTask:创建一定时任务进行清理工作
+                deactivate PurgeTask
+            QuorumPeerMain<--DatadirCleanupManager:启动历史文件清理器
+            deactivate DatadirCleanupManager
+
+            QuorumPeerMain->ZooKeeperServerMain:main
+            activate ZooKeeperServerMain
+
+                ZooKeeperServerMain->ZooKeeperServerMain:<init>
+                activate ZooKeeperServerMain
+                    ZooKeeperServerMain->ZooKeeperServerMain:initializeAndRun
+                    activate ZooKeeperServerMain
+
+
+                        ZooKeeperServerMain->ServerConfig:<init>
+                        activate ServerConfig
+                        ZooKeeperServerMain<--ServerConfig:创建配置文件解析器
+                        deactivate ServerConfig
+
+                        ZooKeeperServerMain->ServerConfig:parse
+                        activate ServerConfig
+                        ZooKeeperServerMain<--ServerConfig:解析配置文件 zoo.cfg
+                        deactivate ServerConfig
+
+                        ZooKeeperServerMain->ZooKeeperServerMain:runFromConfig
+                        activate ZooKeeperServerMain
+
+                            ZooKeeperServerMain->ZooKeeperServer:<init>
+                            activate ZooKeeperServer
+                            ZooKeeperServerMain<--ZooKeeperServer:
+                            deactivate ZooKeeperServer
+
+                            ZooKeeperServerMain->FileTxnSnapLog:<init>
+                            activate FileTxnSnapLog
+                            ZooKeeperServerMain<--FileTxnSnapLog:
+                            deactivate FileTxnSnapLog
+
+                            ZooKeeperServerMain->ZooKeeperServer:setTxnLogFactory
+                            activate ZooKeeperServer
+                            ZooKeeperServerMain<--ZooKeeperServer:设置文件管理对象
+                            deactivate ZooKeeperServer
+
+                            ZooKeeperServerMain->ZooKeeperServer:setTickTime、setMinSessionTimeout
+                            activate ZooKeeperServer
+                            ZooKeeperServerMain<--ZooKeeperServer:设置服务器tickTime、会话超时时间
+                            deactivate ZooKeeperServer
+
+                            ZooKeeperServerMain->ServerCnxnFactory:createFactory
+                            activate ServerCnxnFactory
+                            ZooKeeperServerMain<--ServerCnxnFactory:创建ServerCnxnFactory
+                            deactivate ServerCnxnFactory
+
+                            ZooKeeperServerMain->NIOServerCnxnFactory:configure
+                            activate NIOServerCnxnFactory
+                            ZooKeeperServerMain<--NIOServerCnxnFactory:初始化 ServerCnxnFactory
+                            deactivate NIOServerCnxnFactory
+
+                            ZooKeeperServerMain->NIOServerCnxnFactory:startup
+                            activate NIOServerCnxnFactory
+                                NIOServerCnxnFactory->NIOServerCnxnFactory:start
+                                activate NIOServerCnxnFactory
+                                NIOServerCnxnFactory<--NIOServerCnxnFactory:启动 ZooKeeperThread 线程
+                                deactivate NIOServerCnxnFactory
+
+                                NIOServerCnxnFactory->ZooKeeperServer:startdata
+                                activate ZooKeeperServer
+                                NIOServerCnxnFactory<--ZooKeeperServer:准备本地数据
+                                deactivate ZooKeeperServer
+
+                                NIOServerCnxnFactory->ZooKeeperServer:startup
+                                activate ZooKeeperServer
+                                    ZooKeeperServer->ZooKeeperServer:createSessionTracker
+                                    activate ZooKeeperServer
+                                    ZooKeeperServer<--ZooKeeperServer:创建会话管理器
+                                    deactivate ZooKeeperServer
+
+                                    ZooKeeperServer->ZooKeeperServer:startSessionTracker
+                                    activate ZooKeeperServer
+                                    ZooKeeperServer<--ZooKeeperServer:启动会话管理器
+                                    deactivate ZooKeeperServer
+
+                                    ZooKeeperServer->ZooKeeperServer:setupRequestProcessors
+                                    activate ZooKeeperServer
+                                    ZooKeeperServer<--ZooKeeperServer:初始化Zookeeper的请求处理链
+                                    deactivate ZooKeeperServer
+
+                                    ZooKeeperServer->ZooKeeperServer:registerJMX
+                                    activate ZooKeeperServer
+                                    ZooKeeperServer<--ZooKeeperServer:注册JMX
+                                    deactivate ZooKeeperServer
+
+                                NIOServerCnxnFactory<--ZooKeeperServer:
+                                deactivate ZooKeeperServer
+
+                            ZooKeeperServerMain<--NIOServerCnxnFactory:启动 ServerCnxnFactory
+                            deactivate NIOServerCnxnFactory
+
+                        ZooKeeperServerMain<--ZooKeeperServerMain:
+                        deactivate ZooKeeperServerMain
+
+                    ZooKeeperServerMain<--ZooKeeperServerMain:
+                    deactivate ZooKeeperServerMain
+                ZooKeeperServerMain<--ZooKeeperServerMain:
+                deactivate ZooKeeperServerMain
+
+            QuorumPeerMain<--ZooKeeperServerMain:单机模式启动
+            deactivate ZooKeeperServerMain
+
+        QuorumPeerMain <-- QuorumPeerMain:
+        deactivate QuorumPeerMain
+    QuorumPeerMain <-- QuorumPeerMain:
+    deactivate QuorumPeerMain
+QuorumPeerMain <-- QuorumPeerMain:
+deactivate QuorumPeerMain
+
+@enduml

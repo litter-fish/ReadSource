@@ -1,0 +1,76 @@
+@startuml
+
+QuorumPeer->QuorumPeer:startLeaderElection
+activate QuorumPeer
+    QuorumPeer->Vote:<init>
+    activate Vote
+    QuorumPeer<--Vote:
+    deactivate Vote
+
+    QuorumPeer->QuorumPeer:createElectionAlgorithm
+    activate QuorumPeer
+    QuorumPeer<--QuorumPeer:初始化选举
+    deactivate QuorumPeer
+
+    QuorumPeer->QuorumPeer:createCnxnManager
+    activate QuorumPeer
+        QuorumPeer->QuorumCnxManager:<init>
+        activate QuorumCnxManager
+            QuorumCnxManager->QuorumCnxManager.Listener:<init>
+            activate QuorumCnxManager.Listener
+            QuorumCnxManager<--QuorumCnxManager.Listener:
+            deactivate QuorumCnxManager.Listener
+        QuorumPeer<--QuorumCnxManager:
+        deactivate QuorumCnxManager
+
+        QuorumPeer->QuorumCnxManager.Listener:start
+        activate QuorumCnxManager.Listener
+            QuorumCnxManager.Listener->QuorumCnxManager.Listener:run
+            activate QuorumCnxManager.Listener
+            QuorumCnxManager.Listener<--QuorumCnxManager.Listener:
+            deactivate QuorumCnxManager.Listener
+        QuorumPeer<--QuorumCnxManager.Listener:开启对Leader选举端口的监听
+        deactivate QuorumCnxManager.Listener
+
+        QuorumPeer->FastLeaderElection:<init>
+        activate FastLeaderElection
+            FastLeaderElection->FastLeaderElection:starter
+            activate FastLeaderElection
+                FastLeaderElection->FastLeaderElection.Messenger:<init>
+                activate FastLeaderElection.Messenger
+                    FastLeaderElection.Messenger->WorkerSender:<init>
+                    activate WorkerSender
+                    FastLeaderElection.Messenger<--WorkerSender:
+                    deactivate WorkerSender
+
+                    FastLeaderElection.Messenger->Thread:start
+                    activate Thread
+                    FastLeaderElection.Messenger<--Thread:启动消息发送线程
+                    deactivate Thread
+
+                    FastLeaderElection.Messenger->WorkerReceiver:<init>
+                    activate WorkerReceiver
+                    FastLeaderElection.Messenger<--WorkerReceiver:
+                    deactivate WorkerReceiver
+
+                    FastLeaderElection.Messenger->Thread:start
+                    activate Thread
+                    FastLeaderElection.Messenger<--Thread:启动消息接收线程
+                    deactivate Thread
+
+
+                FastLeaderElection<--FastLeaderElection.Messenger:
+                deactivate FastLeaderElection.Messenger
+            FastLeaderElection<--FastLeaderElection:
+            deactivate FastLeaderElection
+        QuorumPeer<--FastLeaderElection:创建选举实现类
+        deactivate FastLeaderElection
+
+    QuorumPeer<--QuorumPeer:创建Leader选举所需的网络I/O层
+    deactivate QuorumPeer
+
+QuorumPeer<--QuorumPeer:初始化 leader 选举
+deactivate QuorumPeer
+
+
+@enduml

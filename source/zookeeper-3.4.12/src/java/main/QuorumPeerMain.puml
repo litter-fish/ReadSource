@@ -1,0 +1,75 @@
+@startuml
+
+QuorumPeerMain -> QuorumPeerMain:main
+activate QuorumPeerMain
+    QuorumPeerMain -> QuorumPeerMain:<init>
+    activate QuorumPeerMain
+        QuorumPeerMain -> QuorumPeerMain:initializeAndRun
+        activate QuorumPeerMain
+            QuorumPeerMain->QuorumPeerConfig:<init>
+            activate QuorumPeerConfig
+            QuorumPeerMain<--QuorumPeerConfig:
+            deactivate QuorumPeerConfig
+
+            QuorumPeerMain->QuorumPeerConfig:parse
+            activate QuorumPeerConfig
+            QuorumPeerMain<--QuorumPeerConfig:解析配置文件 zoo.cfg
+            deactivate QuorumPeerConfig
+
+            QuorumPeerMain->DatadirCleanupManager:<init>
+            activate DatadirCleanupManager
+            QuorumPeerMain<--DatadirCleanupManager:创建历史文件清理器
+            deactivate DatadirCleanupManager
+
+            QuorumPeerMain->DatadirCleanupManager:start
+            activate DatadirCleanupManager
+                DatadirCleanupManager->PurgeTask:<init>
+                activate PurgeTask
+                DatadirCleanupManager<--PurgeTask:创建一定时任务进行清理工作
+                deactivate PurgeTask
+
+                DatadirCleanupManager->PurgeTask:run
+                activate PurgeTask
+                    PurgeTask->PurgeTxnLog:purge
+                    activate PurgeTxnLog
+                        PurgeTxnLog->FileTxnSnapLog:<init>
+                        activate FileTxnSnapLog
+                        PurgeTxnLog<--FileTxnSnapLog:创建操作数据文件的接口
+                        deactivate FileTxnSnapLog
+
+                        PurgeTxnLog->FileTxnSnapLog:findNRecentSnapshots
+                        activate FileTxnSnapLog
+                        PurgeTxnLog<--FileTxnSnapLog:找到最后的num个快照文件
+                        deactivate FileTxnSnapLog
+
+                        PurgeTxnLog->PurgeTxnLog:purgeOlderSnapshots
+                        activate PurgeTxnLog
+                        PurgeTxnLog<--PurgeTxnLog:清理旧的快照文件
+                        deactivate PurgeTxnLog
+                    PurgeTask<--PurgeTxnLog:
+                    deactivate PurgeTxnLog
+                DatadirCleanupManager<--PurgeTask:启动清理工作
+                deactivate PurgeTask
+
+            QuorumPeerMain<--DatadirCleanupManager:启动历史文件清理器
+            deactivate DatadirCleanupManager
+            alt 集群模式
+                QuorumPeerMain->QuorumPeerMain:runFromConfig
+                activate QuorumPeerMain
+                QuorumPeerMain<--QuorumPeerMain:
+                deactivate QuorumPeerMain
+            else 单机模式
+                QuorumPeerMain->ZooKeeperServerMain:main
+                activate ZooKeeperServerMain
+                QuorumPeerMain<--ZooKeeperServerMain:单机模式启动
+                deactivate ZooKeeperServerMain
+            end
+
+        QuorumPeerMain <-- QuorumPeerMain:
+        deactivate QuorumPeerMain
+    QuorumPeerMain <-- QuorumPeerMain:
+    deactivate QuorumPeerMain
+QuorumPeerMain <-- QuorumPeerMain:
+deactivate QuorumPeerMain
+
+@enduml

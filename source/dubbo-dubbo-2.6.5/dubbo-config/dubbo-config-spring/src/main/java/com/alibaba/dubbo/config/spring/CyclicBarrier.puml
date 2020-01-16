@@ -1,0 +1,18 @@
+@startuml
+
+
+
+CyclicBarrier *..> ReentrantLock
+
+CyclicBarrier *..> Condition
+
+class CyclicBarrier {
+    ~final ReentrantLock lock
+    ~final Condition trip
+    ~final int parties
+    +void await()
+    +void reset()
+}
+
+
+@enduml

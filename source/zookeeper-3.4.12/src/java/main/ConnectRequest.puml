@@ -1,0 +1,77 @@
+@startuml
+
+NIOServerCnxnFactory->NIOServerCnxnFactory:run
+activate NIOServerCnxnFactory
+
+    NIOServerCnxnFactory->NIOServerCnxn:doIO
+    activate NIOServerCnxn
+        NIOServerCnxn->NIOServerCnxn:readPayload
+        activate NIOServerCnxn
+            NIOServerCnxn->NIOServerCnxn:readConnectRequest
+            activate NIOServerCnxn
+                NIOServerCnxn->ZooKeeperServer:processConnectRequest
+                activate ZooKeeperServer
+                    ZooKeeperServer->ConnectRequest:deserialize
+                    activate ConnectRequest
+                    ZooKeeperServer<--ConnectRequest:反序列化 ConnectRequest 请求
+                    deactivate ConnectRequest
+
+                    ZooKeeperServer->ZooKeeperServer:createSession
+                    activate ZooKeeperServer
+                        ZooKeeperServer->SessionTrackerImpl:createSession
+                        activate SessionTrackerImpl
+                            SessionTrackerImpl->SessionTrackerImpl:addSession
+                            activate SessionTrackerImpl
+                                SessionTrackerImpl->SessionTrackerImpl:touchSession
+                                activate SessionTrackerImpl
+                                SessionTrackerImpl<--SessionTrackerImpl:会话激活
+                                deactivate SessionTrackerImpl
+                            SessionTrackerImpl<--SessionTrackerImpl:注册会话
+                            deactivate SessionTrackerImpl
+                        ZooKeeperServer<--SessionTrackerImpl:
+                        deactivate SessionTrackerImpl
+
+                        ZooKeeperServer->Random:nextBytes
+                        activate Random
+                        ZooKeeperServer<--Random:生成会话密码
+                        deactivate Random
+
+                        ZooKeeperServer->NIOServerCnxn:setSessionId
+                        activate NIOServerCnxn
+                        ZooKeeperServer<--NIOServerCnxn:设置SessionId
+                        deactivate NIOServerCnxn
+
+                        ZooKeeperServer->ZooKeeperServer:submitRequest
+                        activate ZooKeeperServer
+                            ZooKeeperServer->ZooKeeperServer:submitRequest
+                            activate ZooKeeperServer
+                                ZooKeeperServer->ZooKeeperServer:touch
+                                activate ZooKeeperServer
+                                ZooKeeperServer<--ZooKeeperServer:会话再次激活
+                                deactivate ZooKeeperServer
+
+                                ZooKeeperServer->PrepRequestProcessor:processRequest
+                                activate PrepRequestProcessor
+                                ZooKeeperServer<--PrepRequestProcessor:请求交给第一个处理器处理
+                                deactivate PrepRequestProcessor
+                            ZooKeeperServer<--ZooKeeperServer:
+                            deactivate ZooKeeperServer
+                        ZooKeeperServer<--ZooKeeperServer:将会话创建请教交给 PrepRequestProcessor 处理
+                        deactivate ZooKeeperServer
+
+                    ZooKeeperServer<--ZooKeeperServer:会话创建
+                    deactivate ZooKeeperServer
+                NIOServerCnxn<--ZooKeeperServer:
+                deactivate ZooKeeperServer
+            NIOServerCnxn<--NIOServerCnxn:处理 ConnectRequest 请求
+            deactivate NIOServerCnxn
+        NIOServerCnxn<--NIOServerCnxn:
+        deactivate NIOServerCnxn
+    NIOServerCnxnFactory<--NIOServerCnxn:
+    deactivate NIOServerCnxn
+
+
+NIOServerCnxnFactory<--NIOServerCnxnFactory:
+deactivate NIOServerCnxnFactory
+
+@enduml

@@ -1,0 +1,136 @@
+@startuml
+
+
+Thread->QuorumPeer:run
+activate Thread
+activate QuorumPeer
+    QuorumPeer->MBeanRegistry:register
+    activate MBeanRegistry
+    QuorumPeer<--MBeanRegistry:注册JMX服务
+    deactivate MBeanRegistry
+
+    loop zookeeper running
+        alt LOOKING
+            QuorumPeer->FastLeaderElection:lookForLeader
+            activate FastLeaderElection
+            QuorumPeer<--FastLeaderElection:Leader选举
+            deactivate FastLeaderElection
+        else LEADING
+            QuorumPeer->QuorumPeer:makeLeader
+            activate QuorumPeer
+                QuorumPeer->LeaderZooKeeperServer:<init>
+                activate LeaderZooKeeperServer
+                QuorumPeer<--LeaderZooKeeperServer:创建Leader的ZooKeeperServer
+                deactivate LeaderZooKeeperServer
+
+                QuorumPeer->Leader:<init>
+                activate Leader
+                QuorumPeer<--Leader:创建Leader
+                deactivate Leader
+
+            QuorumPeer<--QuorumPeer:创建Leader实例
+            deactivate QuorumPeer
+
+            QuorumPeer->Leader:lead
+            activate Leader
+                Leader->LeaderZooKeeperServer:registerJMX
+                activate LeaderZooKeeperServer
+                Leader<--LeaderZooKeeperServer:注册JMX服务
+                deactivate LeaderZooKeeperServer
+
+                Leader->ZooKeeperServer:loadData
+                activate ZooKeeperServer
+                Leader<--ZooKeeperServer:加载数据
+                deactivate ZooKeeperServer
+
+                Leader->Leader.LearnerCnxAcceptor:<init>
+                activate Leader.LearnerCnxAcceptor
+                Leader<--Leader.LearnerCnxAcceptor:创建 leader与其他服务器通信 LearnerHandler 线程
+                deactivate Leader.LearnerCnxAcceptor
+
+                Leader->Leader.LearnerCnxAcceptor:run
+                activate Leader.LearnerCnxAcceptor
+                    Leader.LearnerCnxAcceptor->LearnerHandler:<init>
+                    activate LearnerHandler
+                    Leader.LearnerCnxAcceptor<--LearnerHandler:创建leader服务器与Learner服务器通信线程
+                    deactivate LearnerHandler
+
+                    Leader.LearnerCnxAcceptor->LearnerHandler:run
+                    activate LearnerHandler
+                    Leader.LearnerCnxAcceptor<--LearnerHandler:启动leader服务器与Learner服务器通信线程
+                    deactivate LearnerHandler
+                Leader<--Leader.LearnerCnxAcceptor:启动 LearnerHandler 线程
+                deactivate Leader.LearnerCnxAcceptor
+
+
+            QuorumPeer<--Leader:LEADING服务器的启动
+            deactivate Leader
+
+        else FOLLOWING
+
+            QuorumPeer->QuorumPeer:makeFollower
+            activate QuorumPeer
+                QuorumPeer->FollowerZooKeeperServer:<init>
+                activate FollowerZooKeeperServer
+                QuorumPeer<--FollowerZooKeeperServer:创建Follower的ZooKeeperServer
+                deactivate FollowerZooKeeperServer
+
+                QuorumPeer->Follower:<init>
+                activate Follower
+                QuorumPeer<--Follower:创建Follower
+                deactivate Follower
+            QuorumPeer<--QuorumPeer:创建Follower实例
+            deactivate QuorumPeer
+
+            QuorumPeer->Follower:followLeader
+            activate Follower
+                  Follower->FollowerZooKeeperServer:registerJMX
+                  activate FollowerZooKeeperServer
+                  Follower<--FollowerZooKeeperServer:注册JMX服务
+                  deactivate FollowerZooKeeperServer
+
+                  Follower->Learner:findLeader
+                  activate Learner
+                  Follower<--Learner:寻找Leader
+                  deactivate Learner
+
+                  Follower->Learner:connectToLeader
+                  activate Learner
+                  Follower<--Learner:与leader建立连接
+                  deactivate Learner
+
+                  Follower->Learner:registerWithLeader
+                  activate Learner
+                  Follower<--Learner:向leader注册
+                  deactivate Learner
+
+                  Follower->Learner:syncWithLeader
+                  activate Learner
+                  Follower<--Learner:与leader进行同步
+                  deactivate Learner
+
+                  loop
+                      Follower->Learner:readPacket
+                      activate Learner
+                      Follower<--Learner:读取leader数据包
+                      deactivate Learner
+
+                      Follower->Follower:processPacket
+                      activate Follower
+                      Follower<--Follower:处理leader数据包
+                      deactivate Follower
+                  end
+
+            QuorumPeer<--Follower:FOLLOWING服务器的启动
+            deactivate Follower
+        else OBSERVING
+
+        end
+    end
+
+
+Thread<--QuorumPeer:进行 leader 选举
+deactivate QuorumPeer
+deactivate Thread
+
+@enduml

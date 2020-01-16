@@ -1,0 +1,21 @@
+@startuml
+
+abstract class AbstractQueuedSynchronizer
+
+AbstractQueuedSynchronizer <|-- Sync
+
+CountDownLatch ..> Sync
+
+
+class CountDownLatch {
+    ~final Sync sync
+    +void await()
+    +void countDown()
+}
+
+class Sync {
+    #int tryAcquireShared(int acquires)
+    #boolean tryReleaseShared(int releases)
+}
+
+@enduml

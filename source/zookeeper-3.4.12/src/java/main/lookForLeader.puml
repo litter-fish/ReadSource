@@ -1,0 +1,96 @@
+@startuml
+
+QuorumPeer->FastLeaderElection:lookForLeader
+activate FastLeaderElection
+    FastLeaderElection->AtomicLong:incrementAndGet
+    activate AtomicLong
+    FastLeaderElection<--AtomicLong:自增选举轮次
+    deactivate AtomicLong
+
+    FastLeaderElection->FastLeaderElection:updateProposal
+    activate FastLeaderElection
+    FastLeaderElection<--FastLeaderElection:初始化投票
+    deactivate FastLeaderElection
+
+    FastLeaderElection->FastLeaderElection:sendNotifications
+    activate FastLeaderElection
+    FastLeaderElection<--FastLeaderElection:发送初始化选票
+    deactivate FastLeaderElection
+
+    loop LOOKING
+        FastLeaderElection->LinkedBlockingQueue:poll
+        activate LinkedBlockingQueue
+        FastLeaderElection<--LinkedBlockingQueue:从队列 recvqueue 中接收外部选票信息
+        deactivate LinkedBlockingQueue
+
+        alt 外部的选举轮次大于内部轮次
+            FastLeaderElection->FastLeaderElection:totalOrderPredicate
+            activate FastLeaderElection
+            FastLeaderElection<--FastLeaderElection:投票PK
+            deactivate FastLeaderElection
+
+            FastLeaderElection->FastLeaderElection:updateProposal
+            activate FastLeaderElection
+            FastLeaderElection<--FastLeaderElection:更新投票信息
+            deactivate FastLeaderElection
+
+            FastLeaderElection->FastLeaderElection:sendNotifications
+            activate FastLeaderElection
+            FastLeaderElection<--FastLeaderElection:再次发送更新后的投票信息
+            deactivate FastLeaderElection
+
+        else 外部投票的批次比内部批次小
+            note right of FastLeaderElection: 如果外部投票的批次比内部批次小直接忽略
+        else 轮次相同
+            FastLeaderElection->FastLeaderElection:totalOrderPredicate
+            activate FastLeaderElection
+            FastLeaderElection<--FastLeaderElection:投票PK
+            deactivate FastLeaderElection
+            alt PK失败
+                FastLeaderElection->FastLeaderElection:updateProposal
+                activate FastLeaderElection
+                FastLeaderElection<--FastLeaderElection:更新投票信息
+                deactivate FastLeaderElection
+
+                FastLeaderElection->FastLeaderElection:sendNotifications
+                activate FastLeaderElection
+                FastLeaderElection<--FastLeaderElection:再次发送更新后的投票信息
+                deactivate FastLeaderElection
+            end
+        end
+
+        FastLeaderElection->HashMap:put
+        activate HashMap
+        FastLeaderElection<--HashMap:投票归档，记录当前服务器本轮次收到所有外部服务器的投票
+        deactivate HashMap
+
+        FastLeaderElection->FastLeaderElection:termPredicate
+        activate FastLeaderElection
+        FastLeaderElection<--FastLeaderElection:投票统计
+        deactivate FastLeaderElection
+
+        alt 投票统计结果：如果过半数投票认可当前内部投票、
+            note right of QuorumPeer: 等待200毫秒确定是否还有更优投票，如果没有更优投票则进行服务器状态更新
+            FastLeaderElection->QuorumPeer:setPeerState
+            activate QuorumPeer
+            FastLeaderElection<--QuorumPeer:变更服务器状态
+            deactivate QuorumPeer
+
+            FastLeaderElection->Vote:<init>
+            activate Vote
+            FastLeaderElection<--Vote:使用leader投票构造对象
+            deactivate Vote
+
+            FastLeaderElection->FastLeaderElection:leaveInstance
+            activate FastLeaderElection
+            FastLeaderElection<--FastLeaderElection:清空投票接收队列
+            deactivate FastLeaderElection
+            note right of QuorumPeer: 选举结束，返回投票
+        end
+
+    end
+
+QuorumPeer<--FastLeaderElection:Leader选举
+deactivate FastLeaderElection
+
+@enduml

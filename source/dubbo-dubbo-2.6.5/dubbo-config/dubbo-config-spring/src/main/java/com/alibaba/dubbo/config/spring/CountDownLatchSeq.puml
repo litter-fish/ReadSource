@@ -1,0 +1,102 @@
+@startuml
+
+==初始化==
+CountDownLatch -> CountDownLatch:<init>
+activate CountDownLatch
+
+    CountDownLatch->Sync:<init>
+    activate Sync
+        Sync->AbstractQueuedSynchronizer:setState
+        activate AbstractQueuedSynchronizer
+        Sync<--AbstractQueuedSynchronizer:
+        deactivate AbstractQueuedSynchronizer
+    CountDownLatch<--Sync:
+    deactivate Sync
+
+CountDownLatch <-- CountDownLatch:
+deactivate CountDownLatch
+
+==等待==
+CountDownLatch -> CountDownLatch:await
+activate CountDownLatch
+    CountDownLatch->AbstractQueuedSynchronizer:acquireSharedInterruptibly
+    activate AbstractQueuedSynchronizer
+        AbstractQueuedSynchronizer->Thread:interrupted
+        activate Thread
+        AbstractQueuedSynchronizer<--Thread:判断中断
+        deactivate Thread
+
+        AbstractQueuedSynchronizer->CountDownLatch.Sync:tryAcquireShared
+        activate CountDownLatch.Sync
+            CountDownLatch.Sync->AbstractQueuedSynchronizer:getState
+            activate AbstractQueuedSynchronizer
+            CountDownLatch.Sync<--AbstractQueuedSynchronizer:
+            deactivate AbstractQueuedSynchronizer
+
+        AbstractQueuedSynchronizer<--CountDownLatch.Sync:
+        deactivate CountDownLatch.Sync
+
+        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:doAcquireSharedInterruptibly
+        activate AbstractQueuedSynchronizer
+        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:加入同步队列
+        deactivate AbstractQueuedSynchronizer
+
+    CountDownLatch<--AbstractQueuedSynchronizer:
+    deactivate AbstractQueuedSynchronizer
+CountDownLatch <-- CountDownLatch:
+deactivate CountDownLatch
+
+==减少计数器==
+CountDownLatch -> CountDownLatch:countDown
+activate CountDownLatch
+    CountDownLatch->AbstractQueuedSynchronizer:releaseShared
+    activate AbstractQueuedSynchronizer
+        AbstractQueuedSynchronizer->CountDownLatch.Sync:tryReleaseShared
+        activate CountDownLatch.Sync
+            CountDownLatch.Sync->AbstractQueuedSynchronizer:getState
+            activate AbstractQueuedSynchronizer
+            CountDownLatch.Sync<--AbstractQueuedSynchronizer:获取状态值
+            deactivate AbstractQueuedSynchronizer
+
+            CountDownLatch.Sync->AbstractQueuedSynchronizer:compareAndSetState
+            activate AbstractQueuedSynchronizer
+            CountDownLatch.Sync<--AbstractQueuedSynchronizer:CAS比较交换状态值
+            deactivate AbstractQueuedSynchronizer
+
+        AbstractQueuedSynchronizer<--CountDownLatch.Sync:
+        deactivate CountDownLatch.Sync
+
+        AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:doReleaseShared
+        activate AbstractQueuedSynchronizer
+            loop 节点不是头节点
+                AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetWaitStatus
+                activate AbstractQueuedSynchronizer
+                AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:设置值
+                deactivate AbstractQueuedSynchronizer
+
+                AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:unparkSuccessor
+                activate AbstractQueuedSynchronizer
+                    AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:compareAndSetWaitStatus
+                    activate AbstractQueuedSynchronizer
+                    AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:设置节点值为0
+                    deactivate AbstractQueuedSynchronizer
+                    AbstractQueuedSynchronizer->LockSupport:unpark
+                    activate LockSupport
+                        LockSupport->Unsafe:unpark
+                        activate Unsafe
+                        LockSupport<--Unsafe:
+                        deactivate Unsafe
+                    AbstractQueuedSynchronizer<--LockSupport:如果节点状态值==SIGNAL，且通过CAS设置节点值为0成功
+                    deactivate LockSupport
+                AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:唤醒线程
+                deactivate AbstractQueuedSynchronizer
+            end
+        AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+        deactivate AbstractQueuedSynchronizer
+
+    CountDownLatch<--AbstractQueuedSynchronizer:
+    deactivate AbstractQueuedSynchronizer
+CountDownLatch <-- CountDownLatch:
+deactivate CountDownLatch
+
+@enduml

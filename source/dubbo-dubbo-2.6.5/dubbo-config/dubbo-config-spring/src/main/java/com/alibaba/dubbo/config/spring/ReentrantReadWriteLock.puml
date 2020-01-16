@@ -1,0 +1,40 @@
+@startuml
+
+interface Lock
+interface ReadWriteLock
+
+abstract class AbstractQueuedSynchronizer
+
+ReadWriteLock <|-- ReentrantReadWriteLock
+
+AbstractQueuedSynchronizer <|--Sync
+
+Sync <|-- NonfairSync
+Sync <|-- FairSync
+
+ReadLock --|> Lock
+WriteLock --|> Lock
+ReentrantReadWriteLock "1" *..> ReadLock : 依赖
+ReentrantReadWriteLock "1" *..> WriteLock : 依赖
+ReentrantReadWriteLock "1" *..> Sync : 依赖
+
+ReadLock "1" *..> Sync : 依赖
+WriteLock "1" *..> Sync : 依赖
+
+class ReentrantReadWriteLock {
+    -final ReadLock readerLock
+    -final WriteLock writerLock
+    ~final Sync sync
+    +writeLock()
+    +readLock()
+}
+
+class ReadLock {
+    ~final Sync sync
+}
+
+class WriteLock {
+    ~final Sync sync
+}
+
+@enduml

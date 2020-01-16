@@ -1,0 +1,55 @@
+@startuml
+
+Leader->LearnerCnxAcceptor:<init>
+activate Leader
+activate LearnerCnxAcceptor
+Leader<--LearnerCnxAcceptor:leader与其他服务器通信通过 LearnerHandler 线程进行
+deactivate LearnerCnxAcceptor
+
+Leader->LearnerCnxAcceptor:start(run)
+activate LearnerCnxAcceptor
+    LearnerCnxAcceptor->ServerSocket:accept
+    activate ServerSocket
+    LearnerCnxAcceptor<--ServerSocket:阻塞线程直到收到 learner 连接
+    deactivate ServerSocket
+
+    LearnerCnxAcceptor->LearnerHandler:<init>
+    activate LearnerHandler
+    LearnerCnxAcceptor<--LearnerHandler:创建LearnerHandler实例
+    deactivate LearnerHandler
+
+    LearnerCnxAcceptor->LearnerHandler:start(run)
+    activate LearnerHandler
+        LearnerHandler->BinaryInputArchive:readRecord
+        activate BinaryInputArchive
+        LearnerHandler<--BinaryInputArchive:读取learner的注册信息
+        deactivate BinaryInputArchive
+
+        LearnerHandler->Leader:getEpochToPropose
+        activate Leader
+        LearnerHandler<--Leader:生成新的epoch，等待半数learner服务器向Leader注册
+        deactivate Leader
+
+        LearnerHandler->BinaryOutputArchive:writeRecord
+        activate BinaryOutputArchive
+        LearnerHandler<--BinaryOutputArchive:向Learner服务器发送LEADERINFO
+        deactivate BinaryOutputArchive
+
+        LearnerHandler->BinaryInputArchive:readRecord
+        activate BinaryInputArchive
+        LearnerHandler<--BinaryInputArchive:IO阻塞等待Learner服务器反馈ACK
+        deactivate BinaryInputArchive
+
+        LearnerHandler->Leader:waitForEpochAck
+        activate Leader
+        LearnerHandler<--Leader:等待过半Learner回复ACK信息
+        deactivate Leader
+
+    LearnerCnxAcceptor<--LearnerHandler:启动线程，处理消息通信和数据同步
+    deactivate LearnerHandler
+
+Leader<--LearnerCnxAcceptor:启动leader与其他服务器通信
+deactivate LearnerCnxAcceptor
+deactivate Leader
+
+@enduml

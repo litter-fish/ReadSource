@@ -1,0 +1,123 @@
+@startuml
+
+==初始化==
+Semaphore -> Semaphore:<init>
+activate Semaphore
+    Semaphore->Semaphore.NonfairSync:<init>
+    activate Semaphore.NonfairSync
+        Semaphore.NonfairSync->Semaphore.Sync:<init>
+        activate Semaphore.Sync
+            Semaphore.Sync->AbstractQueuedSynchronizer:setState
+            activate AbstractQueuedSynchronizer
+            Semaphore.Sync<--AbstractQueuedSynchronizer:
+            deactivate AbstractQueuedSynchronizer
+        Semaphore.NonfairSync<--Semaphore.Sync:
+        deactivate Semaphore.Sync
+    Semaphore<--Semaphore.NonfairSync:
+    deactivate Semaphore.NonfairSync
+Semaphore <-- Semaphore: 创建指定数量的许可证
+deactivate Semaphore
+
+==获取凭证==
+Semaphore -> Semaphore:acquire
+activate Semaphore
+    Semaphore->AbstractQueuedSynchronizer:acquireSharedInterruptibly
+    activate AbstractQueuedSynchronizer
+
+        Semaphore.NonfairSync<-AbstractQueuedSynchronizer:tryAcquireShared
+        activate Semaphore.NonfairSync
+            Semaphore.NonfairSync->Semaphore.Sync:nonfairTryAcquireShared
+            activate Semaphore.Sync
+                loop 许可证数量 < 0 || CAS更新许可证成功
+                    Semaphore.Sync->AbstractQueuedSynchronizer:getState
+                    activate AbstractQueuedSynchronizer
+                    Semaphore.Sync<--AbstractQueuedSynchronizer:
+                    deactivate AbstractQueuedSynchronizer
+
+                    Semaphore.Sync->AbstractQueuedSynchronizer:compareAndSetState
+                    activate AbstractQueuedSynchronizer
+                    Semaphore.Sync<--AbstractQueuedSynchronizer:
+                    deactivate AbstractQueuedSynchronizer
+                end
+            Semaphore.NonfairSync<--Semaphore.Sync:
+            deactivate Semaphore.Sync
+        Semaphore.NonfairSync-->AbstractQueuedSynchronizer:
+        deactivate Semaphore.NonfairSync
+
+        alt 许可证数量 < 0
+            AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:doAcquireSharedInterruptibly
+            activate AbstractQueuedSynchronizer
+                AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:addWaiter
+                activate AbstractQueuedSynchronizer
+                AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:加入等待队列
+                deactivate AbstractQueuedSynchronizer
+                loop 阻塞线程被唤醒
+                    AbstractQueuedSynchronizer->AbstractQueuedSynchronizer.Node:predecessor
+                    activate AbstractQueuedSynchronizer.Node
+                    AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer.Node:获取前置节点
+                    alt 节点是头节点
+                        AbstractQueuedSynchronizer->Semaphore.NonfairSync:tryAcquireShared
+                        activate Semaphore.NonfairSync
+                        AbstractQueuedSynchronizer<--Semaphore.NonfairSync: 尝试获取凭证，返回凭证数量
+                        deactivate Semaphore.NonfairSync
+
+                        alt 凭证数量 >= 0
+                            AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:setHeadAndPropagate
+                            activate AbstractQueuedSynchronizer
+                            AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+                            deactivate AbstractQueuedSynchronizer
+                        end
+                    end
+                    deactivate AbstractQueuedSynchronizer.Node
+                    AbstractQueuedSynchronizer->LockSupport:parkAndCheckInterrupt
+                    activate LockSupport
+                    AbstractQueuedSynchronizer<--LockSupport:阻塞线程
+                    deactivate LockSupport
+                end
+            AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:加入等待队列并阻塞线程
+            deactivate AbstractQueuedSynchronizer
+        end
+
+    Semaphore<--AbstractQueuedSynchronizer:
+    deactivate AbstractQueuedSynchronizer
+Semaphore <-- Semaphore:
+deactivate Semaphore
+
+==释放凭证==
+Semaphore -> Semaphore:release
+activate Semaphore
+    Semaphore->AbstractQueuedSynchronizer:releaseShared
+    activate AbstractQueuedSynchronizer
+        AbstractQueuedSynchronizer->Semaphore.Sync:tryReleaseShared
+        activate Semaphore.Sync
+            loop
+                Semaphore.Sync->AbstractQueuedSynchronizer:getState
+                activate Semaphore.Sync
+                Semaphore.Sync<--AbstractQueuedSynchronizer:获取可用凭证
+                deactivate Semaphore.Sync
+
+                Semaphore.Sync->AbstractQueuedSynchronizer:compareAndSetState
+                activate Semaphore.Sync
+                Semaphore.Sync<--AbstractQueuedSynchronizer:CAS更新凭证
+                deactivate Semaphore.Sync
+            end
+        AbstractQueuedSynchronizer<--Semaphore.Sync:
+        deactivate Semaphore.Sync
+        alt 凭证更新成功
+            AbstractQueuedSynchronizer->AbstractQueuedSynchronizer:doReleaseShared
+            activate AbstractQueuedSynchronizer
+                loop
+                    AbstractQueuedSynchronizer->LockSupport:unparkSuccessor
+                    activate LockSupport
+
+                    AbstractQueuedSynchronizer<--LockSupport:唤醒等待队列线程
+                    deactivate LockSupport
+                end
+            AbstractQueuedSynchronizer<--AbstractQueuedSynchronizer:
+            deactivate AbstractQueuedSynchronizer
+        end
+    Semaphore<--AbstractQueuedSynchronizer:
+    deactivate AbstractQueuedSynchronizer
+Semaphore <-- Semaphore:
+deactivate Semaphore
+@enduml

@@ -1,0 +1,55 @@
+@startuml
+
+Leader->Leader:startZkServer
+activate Leader
+    Leader->ZooKeeperServer:startup
+    activate ZooKeeperServer
+        ZooKeeperServer->LeaderZooKeeperServer:createSessionTracker
+        activate LeaderZooKeeperServer
+            LeaderZooKeeperServer->SessionTrackerImpl:<init>
+            activate SessionTrackerImpl
+            SessionTrackerImpl->SessionTrackerImpl:roundToInterval
+                activate SessionTrackerImpl
+                SessionTrackerImpl<--SessionTrackerImpl:会话超时时间
+                deactivate SessionTrackerImpl
+
+                SessionTrackerImpl->SessionTrackerImpl:initializeNextSession
+                activate SessionTrackerImpl
+                SessionTrackerImpl<--SessionTrackerImpl:sessionId 的生成
+                deactivate SessionTrackerImpl
+
+                SessionTrackerImpl->SessionTrackerImpl:addSession
+                activate SessionTrackerImpl
+                SessionTrackerImpl<--SessionTrackerImpl:注册会话
+                deactivate SessionTrackerImpl
+
+                SessionTrackerImpl->SessionTrackerImpl:touchSession
+                activate SessionTrackerImpl
+                SessionTrackerImpl<--SessionTrackerImpl:会话激活
+                deactivate SessionTrackerImpl
+
+            LeaderZooKeeperServer<--SessionTrackerImpl:
+            deactivate SessionTrackerImpl
+        ZooKeeperServer<--LeaderZooKeeperServer:创建会话管理器
+        deactivate LeaderZooKeeperServer
+
+        ZooKeeperServer->LeaderZooKeeperServer:startSessionTracker
+        activate LeaderZooKeeperServer
+        ZooKeeperServer<--LeaderZooKeeperServer:启动会话管理器，负责会话超时检查
+        deactivate LeaderZooKeeperServer
+
+        ZooKeeperServer->LeaderZooKeeperServer:setupRequestProcessors
+        activate LeaderZooKeeperServer
+        ZooKeeperServer<--LeaderZooKeeperServer:初始化Zookeeper的请求处理链
+        deactivate LeaderZooKeeperServer
+
+        ZooKeeperServer->LeaderZooKeeperServer:registerJMX
+        activate LeaderZooKeeperServer
+        ZooKeeperServer<--LeaderZooKeeperServer:注册JMX
+        deactivate LeaderZooKeeperServer
+    Leader<--ZooKeeperServer:
+    deactivate ZooKeeperServer
+Leader<--Leader:启动Leader服务器
+deactivate Leader
+
+@enduml

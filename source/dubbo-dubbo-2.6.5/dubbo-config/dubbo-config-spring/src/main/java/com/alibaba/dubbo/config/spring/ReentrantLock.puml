@@ -1,0 +1,61 @@
+@startuml
+
+
+interface Lock
+
+abstract class AbstractQueuedSynchronizer
+
+abstract class AbstractOwnableSynchronizer
+
+AbstractOwnableSynchronizer<|--AbstractQueuedSynchronizer
+Lock <|-- ReentrantLock
+
+AbstractQueuedSynchronizer <|--Sync
+
+ReentrantLock *-- Sync
+AbstractQueuedSynchronizer *-- Node
+
+Sync <|-- NonfairSync
+Sync <|-- FairSync
+
+Condition<|--ConditionObject
+ReentrantLock *-- ConditionObject
+
+abstract class AbstractQueuedSynchronizer {
+    -volatile Node head
+    -volatile Node tail
+    -volatile int state
+
+}
+
+class ReentrantLock {
+    Sync sync
+    +void lock()
+    +void lockInterruptibly()
+    +void tryLock()
+    +void unlock()
+    +Condition newCondition()
+}
+
+class Sync {
+}
+
+class NonfairSync {
+    ~final void lock()
+    #final boolean tryAcquire()
+}
+
+class FairSync {
+    ~final void lock()
+    #final boolean tryAcquire()
+}
+
+class ConditionObject {
+    -Node firstWaiter
+    -Node lastWaiter
+}
+
+interface Condition
+
+
+@enduml

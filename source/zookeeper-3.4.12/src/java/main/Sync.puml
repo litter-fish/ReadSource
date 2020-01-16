@@ -1,0 +1,89 @@
+@startuml
+
+==Learner接受到请求提议==
+Follower->Follower:processPacket
+activate Follower
+    [-> Follower:Learner收到事务请求
+    Follower->SerializeUtils:deserializeTxn
+    activate SerializeUtils
+        SerializeUtils->CreateSessionTxn:<init>
+        activate CreateSessionTxn
+        SerializeUtils<--CreateSessionTxn:
+        deactivate CreateSessionTxn
+
+        SerializeUtils->CreateSessionTxn:deserialize
+        activate CreateSessionTxn
+        SerializeUtils<--CreateSessionTxn:
+        deactivate CreateSessionTxn
+    Follower<--SerializeUtils:反序列化创建请求
+    deactivate SerializeUtils
+
+    Follower->FollowerZooKeeperServer:logRequest
+    activate FollowerZooKeeperServer
+        FollowerZooKeeperServer->SyncRequestProcessor:processRequest
+        activate SyncRequestProcessor
+            SyncRequestProcessor->LinkedBlockingQueue:add
+            activate LinkedBlockingQueue
+            SyncRequestProcessor<--LinkedBlockingQueue:加入阻塞队列
+            deactivate LinkedBlockingQueue
+        FollowerZooKeeperServer<--SyncRequestProcessor:Sync 处理器处理
+        deactivate SyncRequestProcessor
+    Follower<--FollowerZooKeeperServer:
+    deactivate FollowerZooKeeperServer
+
+Follower<--Follower:
+deactivate Follower
+
+==Sync线程处理==
+SyncRequestProcessor->SyncRequestProcessor:run
+activate SyncRequestProcessor
+
+    SyncRequestProcessor->LinkedBlockingQueue:poll
+    activate LinkedBlockingQueue
+    SyncRequestProcessor<--LinkedBlockingQueue:获取请求
+    deactivate LinkedBlockingQueue
+
+
+    SyncRequestProcessor->ZKDatabase:append
+    activate ZKDatabase
+        ZKDatabase->FileTxnSnapLog:append
+        activate FileTxnSnapLog
+            FileTxnSnapLog->FileTxnLog:append
+            activate FileTxnLog
+            FileTxnSnapLog<--FileTxnLog:追加事务日志文件
+            deactivate FileTxnLog
+        ZKDatabase<--FileTxnSnapLog:
+        deactivate FileTxnSnapLog
+    SyncRequestProcessor<--ZKDatabase:请求添加至日志文件
+    deactivate ZKDatabase
+
+    SyncRequestProcessor->SyncRequestProcessor:flush
+    activate SyncRequestProcessor
+        SyncRequestProcessor->ZKDatabase:commit
+        activate ZKDatabase
+        SyncRequestProcessor<--ZKDatabase:事务日志刷到磁盘
+        deactivate ZKDatabase
+
+        SyncRequestProcessor->SendAckRequestProcessor:processRequest
+        activate SendAckRequestProcessor
+            SendAckRequestProcessor->QuorumPacket:<init>
+            activate QuorumPacket
+            SendAckRequestProcessor<--QuorumPacket:构造ACK消息
+            deactivate QuorumPacket
+
+            SendAckRequestProcessor->Learner:writePacket
+            activate Learner
+            SendAckRequestProcessor<--Learner:发送ACK消息给Leader服务器
+            deactivate Learner
+
+        SyncRequestProcessor<--SendAckRequestProcessor:转交下一个处理器
+        deactivate SendAckRequestProcessor
+
+    SyncRequestProcessor<--SyncRequestProcessor:磁盘刷入操作
+    deactivate SyncRequestProcessor
+SyncRequestProcessor<--SyncRequestProcessor:
+deactivate SyncRequestProcessor
+
+
+
+@enduml

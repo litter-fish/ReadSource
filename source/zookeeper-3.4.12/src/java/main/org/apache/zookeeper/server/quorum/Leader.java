@@ -317,6 +317,7 @@ public class Leader {
             try {
                 while (!stop) {
                     try{
+                        // 接受learner连接
                         Socket s = ss.accept();
                         // start with the initLimit, once the ack is processed
                         // in LearnerHandler switch to the syncLimit

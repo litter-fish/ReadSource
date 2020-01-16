@@ -1,0 +1,87 @@
+@startuml
+
+Leader->Leader:lead
+activate Leader
+
+    Leader->LeaderZooKeeperServer:registerJMX
+    activate LeaderZooKeeperServer
+    Leader<--LeaderZooKeeperServer:注册JMX
+    deactivate LeaderZooKeeperServer
+
+    Leader->ZooKeeperServer:loadData
+    activate ZooKeeperServer
+        ZooKeeperServer->ZKDatabase:loadDataBase
+        activate ZKDatabase
+            ZKDatabase->FileTxnSnapLog:restore
+            activate FileTxnSnapLog
+                FileTxnSnapLog->FileSnap:deserialize
+                activate FileSnap
+                    FileSnap->FileSnap:findNValidSnapshots
+                    activate FileSnap
+                    FileSnap<--FileSnap:根据ZXID获取最新的100个快照文件
+                    deactivate FileSnap
+                    FileSnap->FileSnap:deserialize
+                    activate FileSnap
+                        FileSnap->SerializeUtils:deserializeSnapshot
+                        activate SerializeUtils
+                            SerializeUtils->DataTree:deserialize
+                            activate DataTree
+                            SerializeUtils<--DataTree:还原DataTree
+                            deactivate DataTree
+                        FileSnap<--SerializeUtils:
+                        deactivate SerializeUtils
+                    FileSnap<--FileSnap:还原DataTree、SessionTimeOut
+                    deactivate FileSnap
+                FileTxnSnapLog<--FileSnap:
+                deactivate FileSnap
+            ZKDatabase<--FileTxnSnapLog:
+            deactivate FileTxnSnapLog
+        ZooKeeperServer<--ZKDatabase:
+        deactivate ZKDatabase
+    Leader<--ZooKeeperServer:
+    deactivate ZooKeeperServer
+
+    Leader->LearnerCnxAcceptor:<init>
+    activate LearnerCnxAcceptor
+    Leader<--LearnerCnxAcceptor:leader与其他服务器通信通过 LearnerHandler 线程进行
+    deactivate LearnerCnxAcceptor
+
+    Leader->LearnerCnxAcceptor:start(run)
+    activate LearnerCnxAcceptor
+    Leader<--LearnerCnxAcceptor:启动线程，处理Leader与Learner进行消息通信和数据同步
+    deactivate LearnerCnxAcceptor
+
+    Leader->Leader:getEpochToPropose
+    activate Leader
+    note right of Leader: 通过wait和notifyAll确保超过半数learner服务器向Leader进行了注册
+    Leader<--Leader:生成新的epoch，等待过半注册
+    deactivate Leader
+
+    Leader->Leader:waitForEpochAck
+    activate Leader
+    Leader<--Leader:等待过半 Learner 服务器回复ACK
+    deactivate Leader
+
+    Leader->QuorumPeer:setCurrentEpoch
+    activate QuorumPeer
+        Leader->QuorumPeer:writeLongToFile
+        activate QuorumPeer
+        Leader<--QuorumPeer:写当前epoch到事务文件中
+        deactivate QuorumPeer
+    Leader<--QuorumPeer:设置当前epoch
+    deactivate QuorumPeer
+
+    Leader->Leader:waitForNewLeaderAck
+    activate Leader
+    Leader<--Leader:等待过半Learner对NEWLEADER的ACK响应
+    deactivate Leader
+
+    Leader->Leader:startZkServer
+    activate Leader
+    Leader<--Leader:启动Leader服务器
+    deactivate Leader
+
+Leader<--Leader:
+deactivate Leader
+
+@enduml

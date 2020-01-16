@@ -1,0 +1,48 @@
+@startuml
+
+QuorumPeerMain->QuorumPeerMain:runFromConfig
+activate QuorumPeerMain
+    QuorumPeerMain->ServerCnxnFactory:createFactory
+    activate ServerCnxnFactory
+    QuorumPeerMain<--ServerCnxnFactory:
+    deactivate ServerCnxnFactory
+
+    QuorumPeerMain->NIOServerCnxnFactory:configure
+    activate NIOServerCnxnFactory
+    QuorumPeerMain<--NIOServerCnxnFactory:
+    deactivate NIOServerCnxnFactory
+
+    QuorumPeerMain->QuorumPeerMain:getQuorumPeer
+    activate QuorumPeerMain
+    QuorumPeerMain<--QuorumPeerMain:创建 QuorumPeer 实例
+    deactivate QuorumPeerMain
+
+    QuorumPeerMain->QuorumPeer:start
+    activate QuorumPeer
+        QuorumPeer->QuorumPeer:loadDataBase
+        activate QuorumPeer
+        QuorumPeer<--QuorumPeer:加载本地数据
+        deactivate QuorumPeer
+
+        QuorumPeer->NIOServerCnxnFactory:start
+        activate NIOServerCnxnFactory
+        QuorumPeer<--NIOServerCnxnFactory:启动 ServerCnxnFactory 主线程
+        deactivate NIOServerCnxnFactory
+
+        QuorumPeer->QuorumPeer:startLeaderElection
+        activate QuorumPeer
+        QuorumPeer<--QuorumPeer:leader 选举
+        deactivate QuorumPeer
+
+        QuorumPeer->QuorumPeer:run
+        activate QuorumPeer
+        QuorumPeer<--QuorumPeer:启动服务器状态监控线程
+        deactivate QuorumPeer
+
+    QuorumPeerMain<--QuorumPeer:
+    deactivate QuorumPeer
+
+QuorumPeerMain<--QuorumPeerMain:
+deactivate QuorumPeerMain
+
+@enduml

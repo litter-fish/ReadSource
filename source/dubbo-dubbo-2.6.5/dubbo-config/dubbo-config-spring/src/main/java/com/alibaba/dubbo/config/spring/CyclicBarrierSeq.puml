@@ -1,0 +1,65 @@
+@startuml
+
+==初始化==
+CyclicBarrier -> CyclicBarrier:<init>
+activate CyclicBarrier
+
+CyclicBarrier <-- CyclicBarrier: 创建屏障
+deactivate CyclicBarrier
+
+==等待==
+CyclicBarrier -> CyclicBarrier:await
+activate CyclicBarrier
+    CyclicBarrier->CyclicBarrier:dowait
+    activate CyclicBarrier
+
+        CyclicBarrier->ReentrantLock:lock
+        activate ReentrantLock
+        CyclicBarrier<--ReentrantLock:
+        deactivate ReentrantLock
+
+        alt status == 0
+            CyclicBarrier->Runnable:run
+            activate Runnable
+            CyclicBarrier<--Runnable: 启动预设线程
+            deactivate Runnable
+
+            CyclicBarrier->CyclicBarrier:nextGeneration
+            activate CyclicBarrier
+                CyclicBarrier->AbstractQueuedSynchronizer.ConditionObject:signalAll
+                activate AbstractQueuedSynchronizer.ConditionObject
+
+                CyclicBarrier<--AbstractQueuedSynchronizer.ConditionObject:唤醒所有等待线程
+                deactivate AbstractQueuedSynchronizer.ConditionObject
+            CyclicBarrier<--CyclicBarrier: 释放栅栏开启下一个新的Generation
+            deactivate CyclicBarrier
+        end
+
+        loop loop until tripped, broken, interrupted, or timed out
+            CyclicBarrier->AbstractQueuedSynchronizer.ConditionObject:await
+            activate AbstractQueuedSynchronizer.ConditionObject
+                AbstractQueuedSynchronizer.ConditionObject->AbstractQueuedSynchronizer.ConditionObject:addConditionWaiter
+                activate AbstractQueuedSynchronizer.ConditionObject
+                AbstractQueuedSynchronizer.ConditionObject<--AbstractQueuedSynchronizer.ConditionObject:增加到等待队列
+                deactivate AbstractQueuedSynchronizer.ConditionObject
+
+                AbstractQueuedSynchronizer.ConditionObject->AbstractQueuedSynchronizer.ConditionObject:fullyRelease
+                activate AbstractQueuedSynchronizer.ConditionObject
+                AbstractQueuedSynchronizer.ConditionObject<--AbstractQueuedSynchronizer.ConditionObject:释放锁
+                deactivate AbstractQueuedSynchronizer.ConditionObject
+            CyclicBarrier<--AbstractQueuedSynchronizer.ConditionObject:LockSupport.park：阻塞线程
+            deactivate AbstractQueuedSynchronizer.ConditionObject
+        end
+
+        CyclicBarrier->ReentrantLock:unlock
+        activate ReentrantLock
+        CyclicBarrier<--ReentrantLock:
+        deactivate ReentrantLock
+
+    CyclicBarrier<--CyclicBarrier:
+    deactivate CyclicBarrier
+CyclicBarrier <-- CyclicBarrier:
+deactivate CyclicBarrier
+
+
+@enduml

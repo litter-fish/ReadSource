@@ -1,0 +1,92 @@
+@startuml
+
+Follower->Follower:followLeader
+activate Follower
+
+    Follower->LearnerZooKeeperServer:registerJMX
+    activate LearnerZooKeeperServer
+    Follower<--LearnerZooKeeperServer:
+    deactivate LearnerZooKeeperServer
+
+    Follower->Learner:findLeader
+    activate Learner
+    Follower<--Learner:
+    deactivate Learner
+
+    Follower->Learner:connectToLeader
+    activate Learner
+        Learner->Socket:<init>
+        activate Socket
+        Learner<--Socket:
+        deactivate Socket
+
+        Learner->Socket:setSoTimeout
+        activate Socket
+        Learner<--Socket:
+        deactivate Socket
+
+        Learner->Socket:connect
+        activate Socket
+        Learner<--Socket:
+        deactivate Socket
+
+        Learner->Socket:setTcpNoDelay
+        activate Socket
+        Learner<--Socket:
+        deactivate Socket
+    Follower<--Learner:与leader建立连接
+    deactivate Learner
+
+    Follower->Learner:registerWithLeader
+    activate Learner
+        Learner->LearnerInfo:<init>
+        activate LearnerInfo
+        Learner<--LearnerInfo:
+        deactivate LearnerInfo
+
+        Learner->Learner:writePacket
+        activate Learner
+        Learner<--Learner:发送LearnerInfo信息
+        deactivate Learner
+
+         Learner->Learner:readPacket
+         activate Learner
+         note right of Learner: 阻塞直到leader发送LEADERINFO信息
+         Learner<--Learner:读取LEADERINFO信息
+         deactivate Learner
+
+        Learner->Learner:writePacket
+        activate Learner
+        Learner<--Learner:反馈leader ACKEPOCH信息
+        deactivate Learner
+
+    Follower<--Learner:向leader注册
+    deactivate Learner
+
+    Follower->Learner:syncWithLeader
+    activate Learner
+    Follower<--Learner:数据同步
+    deactivate Learner
+
+    Follower->QuorumPacket:<init>
+    activate QuorumPacket
+    Follower<--QuorumPacket:
+    deactivate QuorumPacket
+
+    loop running
+        Follower->Learner:readPacket
+        activate Learner
+        Follower<--Learner:读取报文
+        deactivate Learner
+
+        Follower->Learner:processPacket
+        activate Learner
+        Follower<--Learner:处理报文
+        deactivate Learner
+    end
+
+
+Follower<--Follower:
+deactivate Follower
+
+@enduml

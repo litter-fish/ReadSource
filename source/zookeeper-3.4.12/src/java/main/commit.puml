@@ -1,0 +1,86 @@
+@startuml
+
+==Leader接收到ACK反馈==
+
+LearnerHandler->LearnerHandler:run
+activate LearnerHandler
+    [-> LearnerHandler:Learner回复ACK
+    LearnerHandler->Leader:processAck
+    activate Leader
+        Leader->QuorumVerifier:containsQuorum
+        activate QuorumVerifier
+        Leader<--QuorumVerifier:过半服务器反馈提议判断
+        deactivate QuorumVerifier
+
+        Leader->Leader:commit
+        activate Leader
+            Leader->QuorumPacket:<init>
+            activate QuorumPacket
+            Leader<--QuorumPacket:创建Commit报文
+            deactivate QuorumPacket
+            Leader->Leader:sendPacket
+            activate Leader
+            Leader<--Leader:发送Commit命令
+            deactivate Leader
+        Leader<--Leader:过半则发送一个Commit命令
+        deactivate Leader
+
+        Leader->Leader:inform
+        activate Leader
+        Leader<--Leader:给Observe参与者发送INFORM命令
+        deactivate Leader
+
+        Leader->CommitProcessor:commit
+        activate CommitProcessor
+            CommitProcessor->LinkedList:add
+            activate LinkedList
+            note left of LinkedList: 已经收到过半服务器ack的请求队列，意味着该请求可以被提交了
+            CommitProcessor<--LinkedList:增加阻塞队列
+            deactivate LinkedList
+            CommitProcessor->Thread:notifyAll
+            activate Thread
+            CommitProcessor<--Thread:唤醒CommitProcessor线程等待的线程
+            deactivate Thread
+        Leader<--CommitProcessor:CommitProcessor 处理器
+        deactivate CommitProcessor
+
+    LearnerHandler<--Leader:
+    deactivate Leader
+LearnerHandler<--LearnerHandler:启动Learner与Leader服务器交互线程
+deactivate LearnerHandler
+
+==CommitProcessor 处理器==
+CommitProcessor->CommitProcessor:run
+activate CommitProcessor
+    CommitProcessor->Object:wait
+    activate Object
+    CommitProcessor<--Object:线程阻塞，等待notifyAll唤醒
+    deactivate Object
+
+    alt notifyAll唤醒CommitProcessor线程等待的线程
+        CommitProcessor->LinkedList:remove
+        activate LinkedList
+        CommitProcessor<--LinkedList:获取阻塞队列提议
+        deactivate LinkedList
+
+        CommitProcessor->ArrayList:add
+        activate ArrayList
+        CommitProcessor<--ArrayList:加入待处理队列
+        deactivate ArrayList
+
+        CommitProcessor->ArrayList:get
+        activate ArrayList
+        CommitProcessor<--ArrayList:获取待处理队列提议
+        deactivate ArrayList
+
+        CommitProcessor->ToBeAppliedRequestProcessor:processRequest
+        activate ToBeAppliedRequestProcessor
+        CommitProcessor<--ToBeAppliedRequestProcessor:待处理队列交给下个处理器
+        deactivate ToBeAppliedRequestProcessor
+    end
+
+CommitProcessor<--CommitProcessor:
+deactivate CommitProcessor
+
+
+@enduml

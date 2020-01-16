@@ -1,0 +1,81 @@
+@startuml
+
+ZooKeeperServer->PrepRequestProcessor:processRequest
+activate PrepRequestProcessor
+    PrepRequestProcessor->LinkedBlockingQueue:add
+    activate LinkedBlockingQueue
+    PrepRequestProcessor<--LinkedBlockingQueue:加入阻塞队列
+    deactivate LinkedBlockingQueue
+ZooKeeperServer<--PrepRequestProcessor:请求交给第一个处理器处理
+deactivate PrepRequestProcessor
+
+==PrepRequestProcessor处理器线程处理==
+PrepRequestProcessor->PrepRequestProcessor:run
+activate PrepRequestProcessor
+    PrepRequestProcessor->LinkedBlockingQueue:take
+    activate LinkedBlockingQueue
+    PrepRequestProcessor<--LinkedBlockingQueue:取队列元素
+    deactivate LinkedBlockingQueue
+
+    PrepRequestProcessor->PrepRequestProcessor:pRequest
+    activate PrepRequestProcessor
+        PrepRequestProcessor->PrepRequestProcessor:pRequest2Txn
+        activate PrepRequestProcessor
+            PrepRequestProcessor->TxnHeader:<init>
+            activate TxnHeader
+            PrepRequestProcessor<--TxnHeader:创建请求头
+            deactivate TxnHeader
+
+        PrepRequestProcessor<--PrepRequestProcessor:创建session或关闭session
+        deactivate PrepRequestProcessor
+
+        PrepRequestProcessor->ProposalRequestProcessor:processRequest
+        activate ProposalRequestProcessor
+            ProposalRequestProcessor->CommitProcessor:提交给下一个处理器：CommitProcessor
+            activate CommitProcessor
+                    CommitProcessor->LinkedList:add
+                    activate LinkedList
+                    CommitProcessor<--LinkedList:加入请求阻塞队列
+                    deactivate LinkedList
+            ProposalRequestProcessor<--CommitProcessor:
+            deactivate CommitProcessor
+
+            ProposalRequestProcessor->Leader:propose
+            activate Leader
+                Leader->TxnHeader:serialize
+                activate TxnHeader
+                Leader<--TxnHeader:序列化请求头
+                deactivate TxnHeader
+
+                Leader->ConnectRequest:serialize
+                activate ConnectRequest
+                Leader<--ConnectRequest:序列化请求体
+                deactivate ConnectRequest
+
+                Leader->Leader:sendPacket
+                activate Leader
+                Leader<--Leader:发送提议
+                deactivate Leader
+
+            ProposalRequestProcessor<--Leader:Leader 服务器发起一个PROPOSAL提议
+            deactivate Leader
+
+            ProposalRequestProcessor->SyncRequestProcessor:processRequest
+            activate SyncRequestProcessor
+                SyncRequestProcessor->LinkedBlockingQueue:add
+                activate LinkedBlockingQueue
+                SyncRequestProcessor<--LinkedBlockingQueue:加入请求阻塞队列
+                deactivate LinkedBlockingQueue
+            ProposalRequestProcessor<--SyncRequestProcessor:SyncRequestProcessor处理器进行事务日志记录
+            deactivate SyncRequestProcessor
+
+        PrepRequestProcessor<--ProposalRequestProcessor:转交给事务处理器
+        deactivate ProposalRequestProcessor
+    PrepRequestProcessor<--PrepRequestProcessor:
+    deactivate PrepRequestProcessor
+PrepRequestProcessor<--PrepRequestProcessor:
+deactivate PrepRequestProcessor
+
+
+
+@enduml

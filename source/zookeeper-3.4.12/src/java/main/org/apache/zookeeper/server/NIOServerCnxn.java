@@ -203,6 +203,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         if (incomingBuffer.remaining() == 0) { // have we read length bytes?
+            // 更新接收包数量
             packetReceived();
             incomingBuffer.flip();
             if (!initialized) {

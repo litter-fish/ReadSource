@@ -1,0 +1,91 @@
+@startuml
+
+FinalRequestProcessor->FinalRequestProcessor:processRequest
+activate FinalRequestProcessor
+    FinalRequestProcessor->ZooKeeperServer:processTxn
+    activate ZooKeeperServer
+        ZooKeeperServer->ZKDatabase:processTxn
+        activate ZKDatabase
+            ZKDatabase->DataTree:processTxn
+            activate DataTree
+            ZKDatabase<--DataTree:
+            deactivate DataTree
+        ZooKeeperServer<--ZKDatabase:应用事务到内存
+        deactivate ZKDatabase
+
+        ZooKeeperServer->SessionTrackerImpl:addSession
+        activate SessionTrackerImpl
+        ZooKeeperServer<--SessionTrackerImpl:再次进行会话注册
+        deactivate SessionTrackerImpl
+    FinalRequestProcessor<--ZooKeeperServer:应用事务到内存数据库
+    deactivate ZooKeeperServer
+
+
+    FinalRequestProcessor->ZKDatabase:addCommittedProposal
+    activate ZKDatabase
+    note left of ZKDatabase: 事务请求加入 committedLog 队列，集群之间进行数据同步
+    FinalRequestProcessor<--ZKDatabase:事务请求加入 committedLog 队列
+    deactivate ZKDatabase
+
+    FinalRequestProcessor->ServerStats:updateLatency
+    activate ServerStats
+    FinalRequestProcessor<--ServerStats:更新延迟
+    deactivate ServerStats
+
+    FinalRequestProcessor->ServerCnxn:updateStatsForResponse
+    activate ServerCnxn
+    FinalRequestProcessor<--ServerCnxn:
+    deactivate ServerCnxn
+
+    FinalRequestProcessor->ZooKeeperServer:finishSessionInit
+    activate ZooKeeperServer
+        ZooKeeperServer->ServerCnxnFactory:registerConnection
+        activate ServerCnxnFactory
+        ZooKeeperServer<--ServerCnxnFactory:
+        deactivate ServerCnxnFactory
+
+        ZooKeeperServer->ConnectResponse:<init>
+        activate ConnectResponse
+        ZooKeeperServer<--ConnectResponse:
+        deactivate ConnectResponse
+
+        ZooKeeperServer->ConnectResponse:serialize
+        activate ConnectResponse
+        ZooKeeperServer<--ConnectResponse:序列化响应报文
+        deactivate ConnectResponse
+
+        ZooKeeperServer->NIOServerCnxn:sendBuffer
+        activate NIOServerCnxn
+            NIOServerCnxn->NIOServerCnxn:internalSendBuffer
+            activate NIOServerCnxn
+                NIOServerCnxn->SocketChannelImpl:write
+                activate SocketChannelImpl
+                NIOServerCnxn<--SocketChannelImpl:写入流数据
+                deactivate SocketChannelImpl
+
+                NIOServerCnxn->ServerCnxn:packetSent
+                activate ServerCnxn
+                    ServerCnxn->ServerCnxn:incrPacketsSent
+                    activate ServerCnxn
+                    ServerCnxn<--ServerCnxn:递增发送包数量
+                    deactivate ServerCnxn
+                NIOServerCnxn<--ServerCnxn:
+                deactivate ServerCnxn
+
+            NIOServerCnxn<--NIOServerCnxn:
+            deactivate NIOServerCnxn
+        ZooKeeperServer<--NIOServerCnxn:发送报文
+        deactivate NIOServerCnxn
+
+    FinalRequestProcessor<--ZooKeeperServer:
+    deactivate ZooKeeperServer
+
+
+
+
+
+FinalRequestProcessor<--FinalRequestProcessor:事务应用
+deactivate FinalRequestProcessor
+
+
+@enduml

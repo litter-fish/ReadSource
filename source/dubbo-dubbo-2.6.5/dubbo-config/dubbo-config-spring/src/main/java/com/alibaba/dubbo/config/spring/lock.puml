@@ -1,0 +1,33 @@
+@startuml
+
+
+interface Lock
+interface Condition
+interface ReadWriteLock
+abstract class AbstractQueuedSynchronizer
+abstract class AbstractOwnableSynchronizer
+
+AbstractOwnableSynchronizer<|--AbstractQueuedSynchronizer
+
+AbstractQueuedSynchronizer ...> LockSupport
+AbstractQueuedSynchronizer ...> Condition
+
+ReentrantLock <|-- NonfairSync
+ReentrantLock <|-- FairSync
+
+ReentrantLock--|>Lock
+ReentrantLock...>AbstractQueuedSynchronizer
+
+ReentrantReadWriteLock --|> ReadWriteLock
+ReentrantReadWriteLock ..> ReadLock
+ReadLock ...> AbstractQueuedSynchronizer
+ReentrantReadWriteLock ...> WriteLock
+WriteLock ...> AbstractQueuedSynchronizer
+
+Semaphore ..> AbstractQueuedSynchronizer
+CountDownLatch ..> AbstractQueuedSynchronizer
+
+CyclicBarrier <.. ReentrantLock
+
+
+@enduml
