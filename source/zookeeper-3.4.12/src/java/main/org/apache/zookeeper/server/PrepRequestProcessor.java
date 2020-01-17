@@ -280,13 +280,16 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         if (acl == null || acl.size() == 0) {
             return;
         }
+        // 先遍历权限模式集合，如果存在super则直接返回
         for (Id authId : ids) {
             if (authId.getScheme().equals("super")) {
                 return;
             }
         }
+        // acl为节点的权限集合
         for (ACL a : acl) {
             Id id = a.getId();
+            // 检查客户端是否具有权限
             if ((a.getPerms() & perm) != 0) {
                 if (id.getScheme().equals("world")
                         && id.getId().equals("anyone")) {

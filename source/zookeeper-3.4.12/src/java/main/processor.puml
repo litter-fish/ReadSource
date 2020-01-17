@@ -1,0 +1,70 @@
+@startuml
+
+
+==PrepRequestProcessor 处理器==
+PrepRequestProcessor->PrepRequestProcessor:run
+activate PrepRequestProcessor
+    PrepRequestProcessor->LinkedBlockingQueue:take
+    activate LinkedBlockingQueue
+    PrepRequestProcessor<--LinkedBlockingQueue:取队列元素
+    deactivate LinkedBlockingQueue
+
+    PrepRequestProcessor->PrepRequestProcessor:pRequest
+    activate PrepRequestProcessor
+        PrepRequestProcessor->SessionTrackerImpl:checkSession
+        activate SessionTrackerImpl
+        PrepRequestProcessor<--SessionTrackerImpl:检查Session
+        deactivate SessionTrackerImpl
+    PrepRequestProcessor<--PrepRequestProcessor:处理请求
+    deactivate PrepRequestProcessor
+
+PrepRequestProcessor<--PrepRequestProcessor:
+deactivate PrepRequestProcessor
+
+==ProposalRequestProcessor 处理器==
+PrepRequestProcessor->ProposalRequestProcessor:processRequest
+activate ProposalRequestProcessor
+    ProposalRequestProcessor->CommitProcessor:processRequest
+    activate CommitProcessor
+        CommitProcessor->LinkedList:add
+        activate LinkedList
+        CommitProcessor<--LinkedList:请求加入阻塞队列
+        deactivate LinkedList
+        CommitProcessor->Object:notifyAll
+        activate Object
+        CommitProcessor<--Object:唤醒CommitProcessor线程等待的线程
+        deactivate Object
+    ProposalRequestProcessor<--CommitProcessor:提交给下一个处理器：CommitProcessor
+    deactivate CommitProcessor
+PrepRequestProcessor<--ProposalRequestProcessor:
+deactivate ProposalRequestProcessor
+
+==CommitProcessor 处理器==
+CommitProcessor->CommitProcessor:run
+activate CommitProcessor
+note left of CommitProcessor:当CommitProcessor处理器启动时，创建并启动一个线程，并阻塞在wait方法中，请求加入后会唤醒线程
+    CommitProcessor->ArrayList:clear
+    activate ArrayList
+    CommitProcessor<--ArrayList:队列清空
+    deactivate ArrayList
+
+    CommitProcessor->Object:wait
+    activate Object
+    CommitProcessor<--Object:阻塞处理请求
+    deactivate Object
+
+    CommitProcessor->ArrayList:add
+    activate ArrayList
+    CommitProcessor<--ArrayList:加入待处理队列
+    deactivate ArrayList
+
+    CommitProcessor->FinalRequestProcessor:processRequest
+    activate FinalRequestProcessor
+    CommitProcessor<--FinalRequestProcessor:待处理队列交给下个处理器
+    deactivate FinalRequestProcessor
+
+CommitProcessor<--CommitProcessor:
+deactivate CommitProcessor
+
+
+@enduml

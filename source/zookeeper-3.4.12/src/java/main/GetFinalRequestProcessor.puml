@@ -1,0 +1,58 @@
+@startuml
+CommitProcessor->FinalRequestProcessor:processRequest
+activate FinalRequestProcessor
+    FinalRequestProcessor->GetDataRequest:<init>
+    activate GetDataRequest
+        GetDataRequest->ByteBufferInputStream:byteBuffer2Record
+        activate ByteBufferInputStream
+        GetDataRequest<--ByteBufferInputStream:
+        deactivate ByteBufferInputStream
+    FinalRequestProcessor<--GetDataRequest:
+    deactivate GetDataRequest
+
+    FinalRequestProcessor->ZKDatabase:getNode
+    activate ZKDatabase
+        ZKDatabase->DataTree:getNode
+        activate DataTree
+            DataTree->ConcurrentHashMap:get
+            activate ConcurrentHashMap
+            DataTree<--ConcurrentHashMap:
+            deactivate ConcurrentHashMap
+        ZKDatabase<--DataTree:
+        deactivate DataTree
+    FinalRequestProcessor<--ZKDatabase:获取数据节点
+    deactivate ZKDatabase
+
+    FinalRequestProcessor->PrepRequestProcessor:checkACL
+    activate PrepRequestProcessor
+    FinalRequestProcessor<--PrepRequestProcessor:ACL 检查
+    deactivate PrepRequestProcessor
+
+    FinalRequestProcessor->ZKDatabase:getNode
+    activate ZKDatabase
+        ZKDatabase->DataTree:getData
+        activate DataTree
+            DataTree->ConcurrentHashMap:get
+            activate ConcurrentHashMap
+            DataTree<--ConcurrentHashMap:
+            deactivate ConcurrentHashMap
+
+            DataTree->DataNode:copyStat
+            activate DataNode
+            DataTree<--DataNode:
+            deactivate DataNode
+
+            DataTree->WatchManager:addWatch
+            activate WatchManager
+            DataTree<--WatchManager:注册监听
+            deactivate WatchManager
+
+
+        ZKDatabase<--DataTree:
+        deactivate DataTree
+    FinalRequestProcessor<--ZKDatabase:获取数据节点
+    deactivate ZKDatabase
+
+CommitProcessor<--FinalRequestProcessor:待处理队列交给下个处理器
+deactivate FinalRequestProcessor
+@enduml

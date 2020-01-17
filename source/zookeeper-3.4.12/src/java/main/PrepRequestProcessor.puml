@@ -1,0 +1,47 @@
+@startuml
+
+NIOServerCnxnFactory->NIOServerCnxnFactory:run
+activate NIOServerCnxnFactory
+
+    NIOServerCnxnFactory->NIOServerCnxn:doIO
+    activate NIOServerCnxn
+        NIOServerCnxn->NIOServerCnxn:readPayload
+        activate NIOServerCnxn
+            NIOServerCnxn->ServerCnxn:packetReceived
+            activate ServerCnxn
+            NIOServerCnxn<--ServerCnxn:更新接收包的数量
+            deactivate ServerCnxn
+            NIOServerCnxn->NIOServerCnxn:readRequest
+            activate NIOServerCnxn
+                NIOServerCnxn->ZooKeeperServer:processPacket
+                activate ZooKeeperServer
+                    ZooKeeperServer->ZooKeeperServer:submitRequest
+                    activate ZooKeeperServer
+                        ZooKeeperServer->ZooKeeperServer:touch
+                        activate ZooKeeperServer
+                            ZooKeeperServer->PrepRequestProcessor:processRequest
+                            activate PrepRequestProcessor
+                                PrepRequestProcessor->LinkedBlockingQueue:add
+                                activate LinkedBlockingQueue
+                                PrepRequestProcessor<--LinkedBlockingQueue:请求交给第一个处理器处理
+                                deactivate LinkedBlockingQueue
+                            ZooKeeperServer<--PrepRequestProcessor:
+                            deactivate PrepRequestProcessor
+                        ZooKeeperServer<--ZooKeeperServer:会话再次激活
+                        deactivate ZooKeeperServer
+                    ZooKeeperServer<--ZooKeeperServer:提交请求处理
+                    deactivate ZooKeeperServer
+                NIOServerCnxn<--ZooKeeperServer:处理请求包
+                deactivate ZooKeeperServer
+            NIOServerCnxn<--NIOServerCnxn:读请求
+            deactivate NIOServerCnxn
+        NIOServerCnxn<--NIOServerCnxn:
+        deactivate NIOServerCnxn
+    NIOServerCnxnFactory<--NIOServerCnxn:
+    deactivate NIOServerCnxn
+
+
+NIOServerCnxnFactory<--NIOServerCnxnFactory:
+deactivate NIOServerCnxnFactory
+
+@enduml

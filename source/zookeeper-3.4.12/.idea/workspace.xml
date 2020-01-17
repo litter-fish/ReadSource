@@ -2,42 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="88d58fad-8de2-4fac-b54a-f0417b20a166" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/CountDownLatch.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/CountDownLatchSeq.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/CyclicBarrier.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/CyclicBarrierSeq.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/ReentrantLock.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/ReentrantReadWriteLock.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/Semaphore.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/SemaphoreSeq.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../dubbo-dubbo-2.6.5/dubbo-config/dubbo-config-spring/src/main/java/com/alibaba/dubbo/config/spring/lock.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/ConnectRequest.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/ProposalRequestProcessor.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/QuorumPeerMain.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/Sync.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/commit.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/follower.followLeader.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/initializeAndRun.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/leader.lead.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/leader2follower.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/lookForLeader.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/processRequest.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/processTxn.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/runFromConfig.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/startLeaderElection.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/startLeaderElectioning.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/startZkServer.puml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/java/main/GetFinalRequestProcessor.puml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/java/main/PrepRequestProcessor.puml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/java/main/ReplyResponce.puml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/java/main/processor.puml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/zookeeper-3.4.12.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/zookeeper-3.4.12.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/txn/CreateSessionTxn.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/txn/CreateSessionTxn.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/proto/GetDataRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/proto/GetDataRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/proto/GetDataResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/proto/GetDataResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/proto/ReplyHeader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/generated/org/apache/zookeeper/proto/ReplyHeader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/DataTree.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/DataTree.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/NIOServerCnxn.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/NIOServerCnxn.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/SessionTrackerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/SessionTrackerImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/FastLeaderElection.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/FastLeaderElection.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/Follower.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/Follower.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/Leader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/Leader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/Learner.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/quorum/Learner.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/PrepRequestProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/PrepRequestProcessor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -144,6 +119,8 @@
       <workItem from="1578917694154" duration="8271000" />
       <workItem from="1578999979100" duration="9243000" />
       <workItem from="1579085504844" duration="8650000" />
+      <workItem from="1579177355695" duration="1132000" />
+      <workItem from="1579256564567" duration="8609000" />
     </task>
     <servers />
   </component>
@@ -163,24 +140,13 @@
       <screen x="0" y="23" width="1440" height="795" />
     </state>
     <state x="378" y="56" width="683" height="729" key="find.popup/0.23.1440.795@0.23.1440.795" timestamp="1578796510557" />
-    <state x="385" y="71" width="670" height="679" key="search.everywhere.popup" timestamp="1579096013471">
+    <state x="385" y="71" width="670" height="679" key="search.everywhere.popup" timestamp="1579180473337">
       <screen x="0" y="23" width="1440" height="798" />
     </state>
     <state x="385" y="71" width="670" height="676" key="search.everywhere.popup/0.23.1440.795@0.23.1440.795" timestamp="1578801176855" />
-    <state x="385" y="71" width="670" height="679" key="search.everywhere.popup/0.23.1440.798@0.23.1440.798" timestamp="1579096013471" />
+    <state x="385" y="71" width="670" height="679" key="search.everywhere.popup/0.23.1440.798@0.23.1440.798" timestamp="1579180473337" />
     <state x="385" y="71" width="670" height="682" key="search.everywhere.popup/0.23.1440.801@0.23.1440.801" timestamp="1579091910381" />
     <state x="385" y="71" width="670" height="685" key="search.everywhere.popup/0.23.1440.804@0.23.1440.804" timestamp="1578918474205" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/ZooKeeperServer.java</url>
-          <line>1107</line>
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="simpleUML.UMLToolWindowPlugin">
     <General>

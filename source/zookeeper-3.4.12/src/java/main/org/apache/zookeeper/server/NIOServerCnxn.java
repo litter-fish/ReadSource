@@ -165,6 +165,7 @@ public class NIOServerCnxn extends ServerCnxn {
             if(sk.isValid() &&
                     ((sk.interestOps() & SelectionKey.OP_WRITE) == 0)) {
                 try {
+                    // 写入数据
                     sock.write(bb);
                 } catch (IOException e) {
                     // we are just doing best effort right now
@@ -172,6 +173,7 @@ public class NIOServerCnxn extends ServerCnxn {
             }
             // if there is nothing left to send, we are done
             if (bb.remaining() == 0) {
+                // 更新发送数量
                 packetSent();
                 return;
             }
@@ -1100,9 +1102,12 @@ public class NIOServerCnxn extends ServerCnxn {
             // Make space for length
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
             try {
+                // 写入四个字节
                 baos.write(fourBytes);
+                // 写入响应头
                 bos.writeRecord(h, "header");
                 if (r != null) {
+                    // 写入响应体
                     bos.writeRecord(r, tag);
                 }
                 baos.close();
@@ -1110,8 +1115,10 @@ public class NIOServerCnxn extends ServerCnxn {
                 LOG.error("Error serializing response");
             }
             byte b[] = baos.toByteArray();
+            // 转换为ByteBuffer
             ByteBuffer bb = ByteBuffer.wrap(b);
             bb.putInt(b.length - 4).rewind();
+            // 发送ByteBuffer
             sendBuffer(bb);
             if (h.getXid() > 0) {
                 synchronized(this){

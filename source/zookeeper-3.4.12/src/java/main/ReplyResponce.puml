@@ -1,0 +1,66 @@
+@startuml
+CommitProcessor->FinalRequestProcessor:processRequest
+activate FinalRequestProcessor
+
+    FinalRequestProcessor->ReplyHeader:<init>
+    activate ReplyHeader
+    FinalRequestProcessor<--ReplyHeader:
+    deactivate ReplyHeader
+
+    FinalRequestProcessor->ServerStats:updateLatency
+    activate ServerStats
+    FinalRequestProcessor<--ServerStats:更新时延
+    deactivate ServerStats
+
+    FinalRequestProcessor->ServerCnxn:updateStatsForResponse
+    activate ServerCnxn
+    FinalRequestProcessor<--ServerCnxn:
+    deactivate ServerCnxn
+
+    FinalRequestProcessor->NIOServerCnxn:sendResponse
+    activate NIOServerCnxn
+        NIOServerCnxn->ByteBuffer:wrap
+        activate ByteBuffer
+        NIOServerCnxn<--ByteBuffer:将流包装成ByteBuffer
+        deactivate ByteBuffer
+        NIOServerCnxn->NIOServerCnxn:sendBuffer
+        activate NIOServerCnxn
+            NIOServerCnxn->NIOServerCnxn:internalSendBuffer
+            activate NIOServerCnxn
+                NIOServerCnxn->SocketChannelImpl:write
+                activate SocketChannelImpl
+                NIOServerCnxn<--SocketChannelImpl:写入数据
+                deactivate SocketChannelImpl
+            NIOServerCnxn<--NIOServerCnxn:
+            deactivate NIOServerCnxn
+
+            NIOServerCnxn->ServerCnxn:packetSent
+            activate ServerCnxn
+                ServerCnxn->ServerCnxn:incrPacketsSent
+                activate ServerCnxn
+                ServerCnxn<--ServerCnxn:更新服务器向客户端发送响应包次数
+                deactivate ServerCnxn
+                ServerCnxn->NIOServerCnxn:serverStats
+                activate NIOServerCnxn
+                    NIOServerCnxn->ZooKeeperServer:serverStats
+                    activate ZooKeeperServer
+                        ZooKeeperServer->ServerStats:incrementPacketsSent
+                        activate ServerStats
+                        ZooKeeperServer<--ServerStats:更新ZooKeeperServer实例发送的响应包次数
+                        deactivate ServerStats
+                    NIOServerCnxn<--ZooKeeperServer:返回务器状态
+                    deactivate ZooKeeperServer
+                ServerCnxn<--NIOServerCnxn:获取服务器状态
+                deactivate NIOServerCnxn
+
+            NIOServerCnxn<--ServerCnxn:
+            deactivate ServerCnxn
+        NIOServerCnxn<--NIOServerCnxn:
+        deactivate NIOServerCnxn
+    FinalRequestProcessor<--NIOServerCnxn:
+    deactivate NIOServerCnxn
+
+
+CommitProcessor<--FinalRequestProcessor:待处理队列交给下个处理器
+deactivate FinalRequestProcessor
+@enduml

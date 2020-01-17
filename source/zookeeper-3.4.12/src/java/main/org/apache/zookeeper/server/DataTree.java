@@ -561,13 +561,16 @@ public class DataTree {
 
     public byte[] getData(String path, Stat stat, Watcher watcher)
             throws KeeperException.NoNodeException {
+        // 获取数据
         DataNode n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
+            // 给stat赋值
             n.copyStat(stat);
             if (watcher != null) {
+                // 注册监听
                 dataWatches.addWatch(path, watcher);
             }
             return n.data;
