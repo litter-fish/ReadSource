@@ -1,0 +1,59 @@
+@startuml
+
+SyncRequestProcessor->SyncRequestProcessor:run
+activate SyncRequestProcessor
+    SyncRequestProcessor->ZooKeeperServer:takeSnapshot
+    activate ZooKeeperServer
+        ZooKeeperServer->FileTxnSnapLog:save
+        activate FileTxnSnapLog
+            FileTxnSnapLog->FileSnap:serialize
+            activate FileSnap
+                FileSnap->FileSnap:serialize
+                activate FileSnap
+                    FileSnap->FileHeader:serialize
+                    activate FileHeader
+                    FileSnap<--FileHeader:写入文件头信息
+                    deactivate FileHeader
+                    FileSnap->SerializeUtils:serializeSnapshot
+                    activate SerializeUtils
+                        SerializeUtils->BinaryOutputArchive:writeInt
+                        activate BinaryOutputArchive
+                        SerializeUtils<--BinaryOutputArchive:写入Session超时时间相关数据
+                        deactivate BinaryOutputArchive
+
+                        SerializeUtils->DataTree:serialize
+                        activate DataTree
+                            DataTree->ReferenceCountedACLCache:serialize
+                            activate ReferenceCountedACLCache
+                            DataTree<--ReferenceCountedACLCache:写入ACL
+                            deactivate ReferenceCountedACLCache
+                            loop 从根节点开始递归节点，写入节点内容
+                                DataTree->DataTree:serializeNode
+                                activate DataTree
+                                    DataTree->BinaryOutputArchive:writeString
+                                    activate BinaryOutputArchive
+                                    DataTree<--BinaryOutputArchive:写入节点路径
+                                    deactivate BinaryOutputArchive
+                                    DataTree->BinaryOutputArchive:writeRecord
+                                    activate BinaryOutputArchive
+                                    DataTree<--BinaryOutputArchive:写入节点内容
+                                    deactivate BinaryOutputArchive
+                                DataTree<--DataTree:写入节点内容
+                                deactivate DataTree
+                            end
+                        SerializeUtils<--DataTree:写入节点内容
+                        deactivate DataTree
+                    FileSnap<--SerializeUtils:写入文件内容及Session超时时间
+                    deactivate SerializeUtils
+                FileSnap<--FileSnap:
+                deactivate FileSnap
+            FileTxnSnapLog<--FileSnap:
+            deactivate FileSnap
+        ZooKeeperServer<--FileTxnSnapLog:保存快照文件
+        deactivate FileTxnSnapLog
+    SyncRequestProcessor<--ZooKeeperServer:创建并启动一个线程进行快照
+    deactivate ZooKeeperServer
+SyncRequestProcessor<--SyncRequestProcessor:
+deactivate SyncRequestProcessor
+
+@enduml

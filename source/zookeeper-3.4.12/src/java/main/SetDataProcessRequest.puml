@@ -1,0 +1,102 @@
+@startuml
+
+ZooKeeperServer->PrepRequestProcessor:processRequest
+activate PrepRequestProcessor
+    PrepRequestProcessor->LinkedBlockingQueue:add
+    activate LinkedBlockingQueue
+    PrepRequestProcessor<--LinkedBlockingQueue:加入阻塞队列
+    deactivate LinkedBlockingQueue
+ZooKeeperServer<--PrepRequestProcessor:请求交给第一个处理器处理
+deactivate PrepRequestProcessor
+
+==PrepRequestProcessor处理器线程处理==
+PrepRequestProcessor->PrepRequestProcessor:run
+activate PrepRequestProcessor
+    PrepRequestProcessor->LinkedBlockingQueue:take
+    activate LinkedBlockingQueue
+    PrepRequestProcessor<--LinkedBlockingQueue:取队列元素
+    deactivate LinkedBlockingQueue
+
+    PrepRequestProcessor->PrepRequestProcessor:pRequest
+    activate PrepRequestProcessor
+
+        PrepRequestProcessor->SetDataRequest:<init>
+        activate SetDataRequest
+        PrepRequestProcessor<--SetDataRequest:创建 SetDataRequest 实例
+        deactivate SetDataRequest
+
+        PrepRequestProcessor->PrepRequestProcessor:pRequest2Txn
+        activate PrepRequestProcessor
+            PrepRequestProcessor->TxnHeader:<init>
+            activate TxnHeader
+            PrepRequestProcessor<--TxnHeader:创建请求头
+            deactivate TxnHeader
+
+            PrepRequestProcessor->SessionTrackerImpl:checkSession
+            activate SessionTrackerImpl
+            PrepRequestProcessor<--SessionTrackerImpl:会话检查
+            deactivate SessionTrackerImpl
+
+            PrepRequestProcessor->ByteBufferInputStream:byteBuffer2Record
+            activate ByteBufferInputStream
+                ByteBufferInputStream->SetDataRequest:deserialize
+                activate SetDataRequest
+                ByteBufferInputStream<--SetDataRequest:反序列化
+                deactivate SetDataRequest
+            PrepRequestProcessor<--ByteBufferInputStream:反序列化SetData请求
+            deactivate ByteBufferInputStream
+
+            PrepRequestProcessor->PrepRequestProcessor:validatePath
+            activate PrepRequestProcessor
+                PrepRequestProcessor->PathUtils:validatePath
+                activate PathUtils
+                PrepRequestProcessor<--PathUtils:
+                deactivate PathUtils
+            PrepRequestProcessor<--PrepRequestProcessor:验证路径的合法性
+            deactivate PrepRequestProcessor
+
+            PrepRequestProcessor->PrepRequestProcessor:getRecordForPath
+            activate PrepRequestProcessor
+            PrepRequestProcessor<--PrepRequestProcessor:根据节点路径获取节点
+            deactivate PrepRequestProcessor
+
+            PrepRequestProcessor->PrepRequestProcessor:checkACL
+            activate PrepRequestProcessor
+            PrepRequestProcessor<--PrepRequestProcessor:ACL 检查
+            deactivate PrepRequestProcessor
+
+            PrepRequestProcessor->SetDataTxn:<init>
+            activate SetDataTxn
+            PrepRequestProcessor<--SetDataTxn:创建请求事务体 SetDataTxn
+            deactivate SetDataTxn
+
+            PrepRequestProcessor->ChangeRecord:duplicate
+            activate ChangeRecord
+                ChangeRecord->ChangeRecord:<init>
+                activate ChangeRecord
+                ChangeRecord<--ChangeRecord:
+                deactivate ChangeRecord
+            PrepRequestProcessor<--ChangeRecord:创建节点副本
+            deactivate ChangeRecord
+
+            PrepRequestProcessor->PrepRequestProcessor:addChangeRecord
+            activate PrepRequestProcessor
+            note right of PrepRequestProcessor:保存 ChangeRecord 对象到outstandingChanges List集合中，同时以路径为纬度保存ChangeRecord对象到Map集合中
+            PrepRequestProcessor<--PrepRequestProcessor:保存 ChangeRecord 对象
+            deactivate PrepRequestProcessor
+
+        PrepRequestProcessor<--PrepRequestProcessor:处理事务请求
+        deactivate PrepRequestProcessor
+
+        PrepRequestProcessor->ProposalRequestProcessor:processRequest
+        activate ProposalRequestProcessor
+        PrepRequestProcessor<--ProposalRequestProcessor:转交给事务处理器
+        deactivate ProposalRequestProcessor
+    PrepRequestProcessor<--PrepRequestProcessor:
+    deactivate PrepRequestProcessor
+PrepRequestProcessor<--PrepRequestProcessor:
+deactivate PrepRequestProcessor
+
+
+
+@enduml

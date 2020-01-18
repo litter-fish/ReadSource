@@ -131,11 +131,14 @@ public class SerializeUtils {
     public static void serializeSnapshot(DataTree dt,OutputArchive oa,
             Map<Long, Integer> sessions) throws IOException {
         HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
+        // 写入Session数量
         oa.writeInt(sessSnap.size(), "count");
+        // 写入Session超时时间
         for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
             oa.writeLong(entry.getKey().longValue(), "id");
             oa.writeInt(entry.getValue().intValue(), "timeout");
         }
+        // 写入内容
         dt.serialize(oa, "tree");
     }
 

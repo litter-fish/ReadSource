@@ -19,16 +19,21 @@ activate NIOServerCnxnFactory
                     activate ZooKeeperServer
                         ZooKeeperServer->ZooKeeperServer:touch
                         activate ZooKeeperServer
-                            ZooKeeperServer->PrepRequestProcessor:processRequest
-                            activate PrepRequestProcessor
-                                PrepRequestProcessor->LinkedBlockingQueue:add
-                                activate LinkedBlockingQueue
-                                PrepRequestProcessor<--LinkedBlockingQueue:请求交给第一个处理器处理
-                                deactivate LinkedBlockingQueue
-                            ZooKeeperServer<--PrepRequestProcessor:
-                            deactivate PrepRequestProcessor
+                            ZooKeeperServer->SessionTrackerImpl:touchSession
+                            activate SessionTrackerImpl
+                            ZooKeeperServer<--SessionTrackerImpl:
+                            deactivate SessionTrackerImpl
                         ZooKeeperServer<--ZooKeeperServer:会话再次激活
                         deactivate ZooKeeperServer
+
+                        ZooKeeperServer->PrepRequestProcessor:processRequest
+                        activate PrepRequestProcessor
+                            PrepRequestProcessor->LinkedBlockingQueue:add
+                            activate LinkedBlockingQueue
+                            PrepRequestProcessor<--LinkedBlockingQueue:请求交给第一个处理器处理
+                            deactivate LinkedBlockingQueue
+                        ZooKeeperServer<--PrepRequestProcessor:
+                        deactivate PrepRequestProcessor
                     ZooKeeperServer<--ZooKeeperServer:提交请求处理
                     deactivate ZooKeeperServer
                 NIOServerCnxn<--ZooKeeperServer:处理请求包

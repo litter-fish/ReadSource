@@ -626,7 +626,7 @@ public class Leader {
             }
             // 过半则发送一个Commit命令
             commit(zxid);
-            // 对于Observe 没有参与投票，不能直接发送zxid
+            // 对于Observer 没有参与投票，不能直接发送zxid
             inform(p);
             // 加入请求到 Leader CommitProcessor 处理器
             zk.commitProcessor.commit(p.request);

@@ -1026,8 +1026,10 @@ public class DataTree {
      * @throws IOException
      * @throws InterruptedException
      */
+    // 从根节点开始递归节点，写入节点内容
     void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
         String pathString = path.toString();
+        // 获取节点
         DataNode node = getNode(pathString);
         if (node == null) {
             return;
@@ -1036,6 +1038,7 @@ public class DataTree {
         DataNode nodeCopy;
         synchronized (node) {
             scount++;
+            // 创建节点的副本
             StatPersisted statCopy = new StatPersisted();
             copyStatPersisted(node.stat, statCopy);
             //we do not need to make a copy of node.data because the contents
@@ -1064,11 +1067,14 @@ public class DataTree {
 
     public void serialize(OutputArchive oa, String tag) throws IOException {
         scount = 0;
+        // 写入ACL
         aclCache.serialize(oa);
+        // 写入节点内容
         serializeNode(oa, new StringBuilder(""));
         // / marks end of stream
         // we need to check if clear had been called in between the snapshot.
         if (root != null) {
+            // 最后写入根路径
             oa.writeString("/", "path");
         }
     }

@@ -196,6 +196,7 @@ public class FileTxnLog implements TxnLog {
     public synchronized boolean append(TxnHeader hdr, Record txn)
         throws IOException
     {
+        // 非事务返回false
         if (hdr == null) {
             return false;
         }
@@ -240,7 +241,7 @@ public class FileTxnLog implements TxnLog {
         // 生成 Checksum
         Checksum crc = makeChecksumAlgorithm();
         crc.update(buf, 0, buf.length);
-        // 写入事务日志文件流
+        // 写入 Checksum 事务日志文件流
         oa.writeLong(crc.getValue(), "txnEntryCRC");
         Util.writeTxnBytes(oa, buf);
 

@@ -598,10 +598,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         @SuppressWarnings("unchecked")
         ChangeRecord duplicate(long zxid) {
+            // 创建节点属性副本
             StatPersisted stat = new StatPersisted();
             if (this.stat != null) {
+                // 给节点属性副本赋值
                 DataTree.copyStatPersisted(this.stat, stat);
             }
+            // 创建节点副本
             return new ChangeRecord(zxid, path, stat, childCount,
                     acl == null ? new ArrayList<ACL>() : new ArrayList<ACL>(acl));
         }

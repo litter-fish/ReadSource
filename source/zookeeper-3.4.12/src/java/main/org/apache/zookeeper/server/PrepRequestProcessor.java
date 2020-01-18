@@ -151,6 +151,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         synchronized (zks.outstandingChanges) {
             lastChange = zks.outstandingChangesForPath.get(path);
             if (lastChange == null) {
+                // 根据路径获取节点对象
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n != null) {
                     Set<String> children;
@@ -162,6 +163,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
             }
         }
+        // 如果节点不存在则抛出节点不存在异常
         if (lastChange == null || lastChange.stat == null) {
             throw new KeeperException.NoNodeException(path);
         }
