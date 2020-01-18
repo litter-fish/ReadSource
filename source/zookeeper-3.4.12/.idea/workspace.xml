@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="88d58fad-8de2-4fac-b54a-f0417b20a166" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/java/main/invokeWatcher.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/tigger-watcher.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/watcher-client.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/watcher-service.puml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/java/main/watcher.puml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/ClientCnxn.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/ClientCnxn.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/DataTree.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/DataTree.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/NIOServerCnxn.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/NIOServerCnxn.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/WatchManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/main/org/apache/zookeeper/server/WatchManager.java" afterDir="false" />
-    </list>
+    <list default="true" id="88d58fad-8de2-4fac-b54a-f0417b20a166" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -125,7 +114,7 @@
       <workItem from="1579085504844" duration="8650000" />
       <workItem from="1579177355695" duration="1132000" />
       <workItem from="1579256564567" duration="9180000" />
-      <workItem from="1579311899951" duration="19355000" />
+      <workItem from="1579311899951" duration="19627000" />
     </task>
     <servers />
   </component>
