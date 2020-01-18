@@ -1,0 +1,112 @@
+@startuml
+
+
+==客户端请求==
+ZooKeeper->ZooKeeper:getData
+activate ZooKeeper
+    ZooKeeper->DataWatchRegistration:<init>
+    activate DataWatchRegistration
+    ZooKeeper<--DataWatchRegistration:
+    deactivate DataWatchRegistration
+
+    ZooKeeper->ClientCnxn:submitRequest
+    activate ClientCnxn
+        ClientCnxn->ClientCnxn:queuePacket
+        activate ClientCnxn
+        ClientCnxn<--ClientCnxn:加入outgoingQueue队列
+        deactivate ClientCnxn
+    ZooKeeper<--ClientCnxn:提交请求
+    deactivate ClientCnxn
+ZooKeeper<--ZooKeeper:
+deactivate ZooKeeper
+
+==服务端接收请求==
+FinalRequestProcessor->FinalRequestProcessor:processRequest
+activate FinalRequestProcessor
+    FinalRequestProcessor->ZKDatabase:getData
+    activate ZKDatabase
+        ZKDatabase->DataTree:getData
+        activate DataTree
+            DataTree->WatchManager:addWatch
+            activate WatchManager
+            DataTree<--WatchManager:添加watch
+            deactivate WatchManager
+        ZKDatabase<--DataTree:
+        deactivate DataTree
+    FinalRequestProcessor<--ZKDatabase:
+    deactivate ZKDatabase
+FinalRequestProcessor<--FinalRequestProcessor:
+deactivate FinalRequestProcessor
+
+==服务端发送请求==
+FinalRequestProcessor->FinalRequestProcessor:processRequest
+activate FinalRequestProcessor
+    FinalRequestProcessor->ZooKeeperServer:processTxn
+    activate ZooKeeperServer
+        ZooKeeperServer->ZKDatabase:processTxn
+        activate ZKDatabase
+            ZKDatabase->DataTree:processTxn
+            activate DataTree
+                DataTree->DataTree:setData
+                activate DataTree
+                    DataTree->WatchManager:triggerWatch
+                    activate WatchManager
+                        WatchManager->NIOServerCnxn:process
+                        activate NIOServerCnxn
+                            NIOServerCnxn->NIOServerCnxn:sendResponse
+                            activate NIOServerCnxn
+                            NIOServerCnxn<--NIOServerCnxn:发送事件通知
+                            deactivate NIOServerCnxn
+                        WatchManager<--NIOServerCnxn:
+                        deactivate NIOServerCnxn
+                    DataTree<--WatchManager:触发回调
+                    deactivate WatchManager
+                DataTree<--DataTree:
+                deactivate DataTree
+            ZKDatabase<--DataTree:
+            deactivate DataTree
+        ZooKeeperServer<--ZKDatabase:
+        deactivate ZKDatabase
+    FinalRequestProcessor<--ZooKeeperServer:
+    deactivate ZooKeeperServer
+FinalRequestProcessor<--FinalRequestProcessor:
+deactivate FinalRequestProcessor
+
+==客户端接收通知回调==
+ClientCnxnSocketNIO->ClientCnxnSocketNIO:doIO
+    activate ClientCnxnSocketNIO
+    ClientCnxnSocketNIO->SendThread:
+    activate SendThread
+        SendThread->WatcherEvent:deserialize
+        activate WatcherEvent
+        SendThread<--WatcherEvent:反序列化事件信息
+        deactivate WatcherEvent
+        SendThread->EventThread:queueEvent
+        activate EventThread
+            EventThread->ZKWatchManager:materialize
+            activate ZKWatchManager
+            EventThread<--ZKWatchManager:从ZKWatcherMananger获取相关watcher
+            deactivate ZKWatchManager
+        SendThread<--EventThread:
+        deactivate EventThread
+    ClientCnxnSocketNIO<--SendThread:
+    deactivate SendThread
+ClientCnxnSocketNIO<--ClientCnxnSocketNIO:
+deactivate ClientCnxnSocketNIO
+
+loop 死循环处理事件通知
+    EventThread->EventThread:run
+    activate EventThread
+        EventThread->EventThread:processEvent
+        activate EventThread
+            EventThread->Watcher:process
+            activate Watcher
+            EventThread<--Watcher:
+            deactivate Watcher
+        EventThread<--EventThread:
+        deactivate EventThread
+    EventThread<--EventThread:
+    deactivate EventThread
+end
+
+@enduml

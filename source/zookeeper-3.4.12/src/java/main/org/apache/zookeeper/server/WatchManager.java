@@ -93,10 +93,12 @@ public class WatchManager {
     }
 
     public Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
+        // 封装WatchedEvent对象
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
         HashSet<Watcher> watchers;
         synchronized (this) {
+            // 指定watcher获取并从管理中移除
             watchers = watchTable.remove(path);
             if (watchers == null || watchers.isEmpty()) {
                 if (LOG.isTraceEnabled()) {
@@ -117,6 +119,7 @@ public class WatchManager {
             if (supress != null && supress.contains(w)) {
                 continue;
             }
+            // 调用触发操作
             w.process(e);
         }
         return watchers;

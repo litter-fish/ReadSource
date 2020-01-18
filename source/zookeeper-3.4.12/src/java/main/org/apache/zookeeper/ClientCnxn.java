@@ -473,7 +473,9 @@ public class ClientCnxn {
             sessionState = event.getState();
 
             // materialize the watchers based on the event
+            // 取出相关Watcher
             WatcherSetEventPair pair = new WatcherSetEventPair(
+                    // 从ZKWatcherMananger获取相关watcher
                     watcher.materialize(event.getState(), event.getType(),
                             event.getPath()),
                             event);

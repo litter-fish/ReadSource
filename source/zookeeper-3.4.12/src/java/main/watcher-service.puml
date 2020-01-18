@@ -1,0 +1,18 @@
+@startuml
+FinalRequestProcessor->FinalRequestProcessor:processRequest
+activate FinalRequestProcessor
+    FinalRequestProcessor->ZKDatabase:getData
+    activate ZKDatabase
+        ZKDatabase->DataTree:getData
+        activate DataTree
+            DataTree->WatchManager:addWatch
+            activate WatchManager
+            DataTree<--WatchManager:添加watch
+            deactivate WatchManager
+        ZKDatabase<--DataTree:
+        deactivate DataTree
+    FinalRequestProcessor<--ZKDatabase:
+    deactivate ZKDatabase
+FinalRequestProcessor<--FinalRequestProcessor:
+deactivate FinalRequestProcessor
+@enduml

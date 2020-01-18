@@ -1,0 +1,19 @@
+@startuml
+ZooKeeper->ZooKeeper:getData
+activate ZooKeeper
+    ZooKeeper->DataWatchRegistration:<init>
+    activate DataWatchRegistration
+    ZooKeeper<--DataWatchRegistration:
+    deactivate DataWatchRegistration
+
+    ZooKeeper->ClientCnxn:submitRequest
+    activate ClientCnxn
+        ClientCnxn->ClientCnxn:queuePacket
+        activate ClientCnxn
+        ClientCnxn<--ClientCnxn:加入outgoingQueue队列
+        deactivate ClientCnxn
+    ZooKeeper<--ClientCnxn:提交请求
+    deactivate ClientCnxn
+ZooKeeper<--ZooKeeper:
+deactivate ZooKeeper
+@enduml

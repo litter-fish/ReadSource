@@ -1,0 +1,38 @@
+@startuml
+ClientCnxnSocketNIO->ClientCnxnSocketNIO:doIO
+    activate ClientCnxnSocketNIO
+    ClientCnxnSocketNIO->SendThread:
+    activate SendThread
+        SendThread->WatcherEvent:deserialize
+        activate WatcherEvent
+        SendThread<--WatcherEvent:反序列化事件信息
+        deactivate WatcherEvent
+        SendThread->EventThread:queueEvent
+        activate EventThread
+            EventThread->ZKWatchManager:materialize
+            activate ZKWatchManager
+            EventThread<--ZKWatchManager:从ZKWatcherMananger获取相关watcher
+            deactivate ZKWatchManager
+        SendThread<--EventThread:
+        deactivate EventThread
+    ClientCnxnSocketNIO<--SendThread:
+    deactivate SendThread
+ClientCnxnSocketNIO<--ClientCnxnSocketNIO:
+deactivate ClientCnxnSocketNIO
+
+loop 死循环处理事件通知
+    EventThread->EventThread:run
+    activate EventThread
+        EventThread->EventThread:processEvent
+        activate EventThread
+            EventThread->Watcher:process
+            activate Watcher
+            EventThread<--Watcher:
+            deactivate Watcher
+        EventThread<--EventThread:
+        deactivate EventThread
+    EventThread<--EventThread:
+    deactivate EventThread
+end
+
+@enduml

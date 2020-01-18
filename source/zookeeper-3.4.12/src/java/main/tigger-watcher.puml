@@ -1,0 +1,34 @@
+@startuml
+FinalRequestProcessor->FinalRequestProcessor:processRequest
+activate FinalRequestProcessor
+    FinalRequestProcessor->ZooKeeperServer:processTxn
+    activate ZooKeeperServer
+        ZooKeeperServer->ZKDatabase:processTxn
+        activate ZKDatabase
+            ZKDatabase->DataTree:processTxn
+            activate DataTree
+                DataTree->DataTree:setData
+                activate DataTree
+                    DataTree->WatchManager:triggerWatch
+                    activate WatchManager
+                        WatchManager->NIOServerCnxn:process
+                        activate NIOServerCnxn
+                            NIOServerCnxn->NIOServerCnxn:sendResponse
+                            activate NIOServerCnxn
+                            NIOServerCnxn<--NIOServerCnxn:发送事件通知
+                            deactivate NIOServerCnxn
+                        WatchManager<--NIOServerCnxn:
+                        deactivate NIOServerCnxn
+                    DataTree<--WatchManager:触发回调
+                    deactivate WatchManager
+                DataTree<--DataTree:
+                deactivate DataTree
+            ZKDatabase<--DataTree:
+            deactivate DataTree
+        ZooKeeperServer<--ZKDatabase:
+        deactivate ZKDatabase
+    FinalRequestProcessor<--ZooKeeperServer:
+    deactivate ZooKeeperServer
+FinalRequestProcessor<--FinalRequestProcessor:
+deactivate FinalRequestProcessor
+@enduml

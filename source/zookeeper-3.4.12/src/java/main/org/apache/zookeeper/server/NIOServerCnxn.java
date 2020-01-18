@@ -1145,6 +1145,7 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     @Override
     synchronized public void process(WatchedEvent event) {
+        // 标记-1表示一个通知
         ReplyHeader h = new ReplyHeader(-1, -1L, 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
@@ -1154,8 +1155,10 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         // Convert WatchedEvent to a type that can be sent over the wire
+        // 将WatchedEvent 包装成WatcherEvent 进行网络传输序列化
         WatcherEvent e = event.getWrapper();
 
+        // 向客户端发送通知
         sendResponse(h, e, "notification");
     }
 

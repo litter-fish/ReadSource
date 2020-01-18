@@ -535,6 +535,7 @@ public class DataTree {
           this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
               - (lastdata == null ? 0 : lastdata.length));
         }
+        // 触发节点值改变
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
     }
