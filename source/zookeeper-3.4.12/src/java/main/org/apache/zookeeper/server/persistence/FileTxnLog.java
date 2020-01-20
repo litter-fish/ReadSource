@@ -232,7 +232,7 @@ public class FileTxnLog implements TxnLog {
         }
         // 确定事务文件是否需要扩容
         currentSize = padFile(fos.getChannel());
-        // 事务序列化
+        // 事务序列化，最终生成一个字节数组
         byte[] buf = Util.marshallTxnEntry(hdr, txn);
         if (buf == null || buf.length == 0) {
             throw new IOException("Faulty serialization for header " +
@@ -241,7 +241,7 @@ public class FileTxnLog implements TxnLog {
         // 生成 Checksum
         Checksum crc = makeChecksumAlgorithm();
         crc.update(buf, 0, buf.length);
-        // 写入 Checksum 事务日志文件流
+        // 将序列化后的事务头、事务体及Checksum写入文件流
         oa.writeLong(crc.getValue(), "txnEntryCRC");
         Util.writeTxnBytes(oa, buf);
 

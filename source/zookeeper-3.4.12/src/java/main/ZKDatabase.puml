@@ -1,0 +1,60 @@
+@startuml
+
+ZKDatabase *-- DataTree
+
+DataTree *-- DataNode
+
+DataTree *-- WatchManager: has 2 >
+
+DataTree *-- ReferenceCountedACLCache
+
+class ZKDatabase {
+     # DataTree dataTree;
+     # ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
+     # FileTxnSnapLog snapLog;
+     # long minCommittedLog, maxCommittedLog;
+
+     +long loadDataBase();
+     +void serializeSnapshot(OutputArchive oa);
+     +void deserializeSnapshot(InputArchive ia);
+}
+
+class DataTree {
+    -final ConcurrentHashMap<String, DataNode> nodes;
+    -final WatchManager dataWatches;
+    -final WatchManager childWatches;
+    -final Map<Long, HashSet<String>> ephemerals;
+    -final ReferenceCountedACLCache aclCache;
+
+    + String createNode(String path, byte data[], List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time);
+    + void deleteNode(String path, long zxid);
+    + Stat setData(String path, byte data[], int version, long zxid, long time);
+    +byte[] getData(String path, Stat stat, Watcher watcher);
+    +List<String> getChildren(String path, Stat stat, Watcher watcher);
+    +Stat setACL(String path, List<ACL> acl, int version);
+    +List<ACL> getACL(String path, Stat stat);
+}
+
+class WatchManager {
+}
+
+class ReferenceCountedACLCache {
+}
+
+class DataNode {
+    ~ DataNode parent;
+    ~ byte data[];
+    ~ Long acl;
+    + StatPersisted stat;
+
+    + synchronized boolean addChild(String child);
+    + synchronized boolean removeChild(String child);
+    + synchronized void setChildren(HashSet<String> children);
+    + synchronized Set<String> getChildren();
+    ~ synchronized public void copyStat(Stat to);
+    ~ synchronized public void deserialize(InputArchive archive, String tag);
+    ~ synchronized public void serialize(OutputArchive archive, String tag);
+
+}
+
+@enduml

@@ -1,0 +1,70 @@
+@startuml
+
+
+FileTxnLog->FileTxnLog:append
+activate FileTxnLog
+
+    FileTxnLog->File:<init>
+    activate File
+    FileTxnLog<--File:创建事务文件
+    deactivate File
+
+    FileTxnLog->FileHeader:<init>
+    activate FileHeader
+    FileTxnLog<--FileHeader:文件头：魔数、版本号即dbId
+    deactivate FileHeader
+
+    FileTxnLog->FileHeader:serialize
+    activate FileHeader
+    FileTxnLog<--FileHeader:序列化
+    deactivate FileHeader
+
+    FileTxnLog->FileTxnLog:padFile
+    activate FileTxnLog
+        FileTxnLog->FileTxnLog:calculateFileSizeWithPadding
+        activate FileTxnLog
+        FileTxnLog<--FileTxnLog:计算新文件的大小
+        deactivate FileTxnLog
+
+        FileTxnLog->FileChannel:write
+        activate FileChannel
+        FileTxnLog<--FileChannel:使用“0”填充
+        deactivate FileChannel
+
+    FileTxnLog<--FileTxnLog:
+    deactivate FileTxnLog
+
+    FileTxnLog->Util:marshallTxnEntry
+    activate Util
+        Util->TxnHeader:serialize
+        activate TxnHeader
+        Util<--TxnHeader:序列化事务头
+        deactivate TxnHeader
+        Util->Record:serialize
+        activate Record
+        Util<--Record:序列化事务体
+        deactivate Record
+    FileTxnLog<--Util:事务序列化，最终生成一个字节数组
+    deactivate Util
+
+    FileTxnLog->FileTxnLog:makeChecksumAlgorithm
+    activate FileTxnLog
+        FileTxnLog->Adler32:<init>
+        activate Adler32
+        FileTxnLog<--Adler32:
+        deactivate Adler32
+    FileTxnLog<--FileTxnLog:生成 Checksum
+    deactivate FileTxnLog
+
+    FileTxnLog->Util:writeTxnBytes
+    activate Util
+
+    FileTxnLog<--Util:将序列化后的事务头、事务体写入文件流
+    deactivate Util
+
+
+FileTxnLog<--FileTxnLog:
+deactivate FileTxnLog
+
+
+@enduml

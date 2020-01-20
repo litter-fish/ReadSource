@@ -170,6 +170,7 @@ public class FileTxnSnapLog {
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions, 
             PlayBackListener listener) throws IOException {
+        // 反序列化快照文件
         snapLog.deserialize(dt, sessions);
         return fastForwardFromEdits(dt, sessions, listener);
     }

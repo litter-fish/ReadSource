@@ -1087,9 +1087,12 @@ public class DataTree {
         String path = ia.readString("path");
         while (!path.equals("/")) {
             DataNode node = new DataNode();
+            // 读取文件内容，DataNode
             ia.readRecord(node, "node");
+            // 存储到内存中
             nodes.put(path, node);
             synchronized (node) {
+                // 加入acl
                 aclCache.addUsage(node.acl);
             }
             int lastSlash = path.lastIndexOf('/');
@@ -1097,14 +1100,17 @@ public class DataTree {
                 root = node;
             } else {
                 String parentPath = path.substring(0, lastSlash);
+                // 设置父节点
                 node.parent = nodes.get(parentPath);
                 if (node.parent == null) {
                     throw new IOException("Invalid Datatree, unable to find " +
                             "parent " + parentPath + " of path " + path);
                 }
+                // 设置节点为父节点的孩子节点
                 node.parent.addChild(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
                 if (eowner != 0) {
+                    // 处理临时节点，并保存临时节点的集合中
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {
                         list = new HashSet<String>();

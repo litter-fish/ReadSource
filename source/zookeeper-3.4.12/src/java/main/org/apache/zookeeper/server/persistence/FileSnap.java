@@ -124,13 +124,15 @@ public class FileSnap implements SnapShot {
     public void deserialize(DataTree dt, Map<Long, Integer> sessions,
             InputArchive ia) throws IOException {
         FileHeader header = new FileHeader();
+        // 反序化文件头，判断魔数
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {
             throw new IOException("mismatching magic headers "
                     + header.getMagic() + 
                     " !=  " + FileSnap.SNAP_MAGIC);
         }
-        SerializeUtils.deserializeSnapshot(dt,ia,sessions);
+        // 反序列化session、DataTree对象
+        SerializeUtils.deserializeSnapshot(dt,ia, sessions);
     }
 
     /**

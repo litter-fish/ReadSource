@@ -23,7 +23,9 @@ import org.apache.jute.*;
 import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Public
 public class FileHeader implements Record {
+    // 魔数
     private int magic;
+    // 版本号
     private int version;
     private long dbid;
     public FileHeader() {

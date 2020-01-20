@@ -1,0 +1,69 @@
+@startuml
+
+actor User
+
+User->ZKDatabase:loadDataBase
+activate ZKDatabase
+    ZKDatabase->FileTxnSnapLog:restore
+    activate FileTxnSnapLog
+        FileTxnSnapLog->FileSnap:deserialize
+        activate FileSnap
+            FileSnap->FileSnap:findNValidSnapshots
+            activate FileSnap
+            FileSnap<--FileSnap:根据ZXID获取最新的100个快照文件
+            deactivate FileSnap
+
+            FileSnap->FileSnap:deserialize
+            activate FileSnap
+                FileSnap->FileHeader:<init>
+                activate FileHeader
+                FileSnap<--FileHeader:
+                deactivate FileHeader
+
+                FileSnap->FileHeader:deserialize
+                activate FileHeader
+                FileSnap<--FileHeader:反序化文件头，判断魔数
+                deactivate FileHeader
+
+                FileSnap->SerializeUtils:deserializeSnapshot
+                activate SerializeUtils
+                    SerializeUtils->DataTree:deserialize
+                    activate DataTree
+                    SerializeUtils<--DataTree:还原DataTree
+                    deactivate DataTree
+                FileSnap<--SerializeUtils:反序列化session、DataTree对象
+                deactivate SerializeUtils
+
+            FileSnap<--FileSnap:反序列化操作，还原DataTree和SessionTimeOut
+            deactivate FileSnap
+
+        FileTxnSnapLog<--FileSnap:反序列化快照文件
+        deactivate FileSnap
+
+        FileTxnSnapLog->FileTxnSnapLog:fastForwardFromEdits
+        activate FileTxnSnapLog
+            FileTxnSnapLog->FileTxnSnapLog:processTransaction
+            activate FileTxnSnapLog
+                FileTxnSnapLog->DataTree:processTxn
+                activate DataTree
+                FileTxnSnapLog<--DataTree:应用事务
+                deactivate DataTree
+            FileTxnSnapLog<--FileTxnSnapLog:
+            deactivate FileTxnSnapLog
+
+            FileTxnSnapLog->ZKDatabase:addCommittedProposal
+            activate ZKDatabase
+            note right of ZKDatabase: 将事务操作记录转换为Proposal，并保存在ZKDatabase.commitedLog中，以便Follower能够快速的进行同步
+            FileTxnSnapLog<--ZKDatabase:
+            deactivate ZKDatabase
+
+        FileTxnSnapLog<--FileTxnSnapLog:
+        deactivate FileTxnSnapLog
+
+    ZKDatabase<--FileTxnSnapLog:
+    deactivate FileTxnSnapLog
+
+User<--ZKDatabase:
+deactivate ZKDatabase
+
+@enduml

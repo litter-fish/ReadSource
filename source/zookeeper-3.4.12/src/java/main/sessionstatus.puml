@@ -1,0 +1,17 @@
+@startuml
+
+start  --> "connecting
+requests queued"
+
+--> connected
+
+--> Auth_fail
+
+If "input is verbose" then
+--> [Yes] "turn on verbosity"
+--> "run command"
+else
+--> "run command"
+Endif
+-->close
+@enduml
