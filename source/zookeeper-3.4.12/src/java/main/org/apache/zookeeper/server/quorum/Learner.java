@@ -356,6 +356,7 @@ public class Learner {
                 //we need to truncate the log to the lastzxid of the leader
                 LOG.warn("Truncating log to get in sync with the leader 0x"
                         + Long.toHexString(qp.getZxid()));
+                // 回滚日志操作
                 boolean truncated=zk.getZKDatabase().truncateLog(qp.getZxid());
                 if (!truncated) {
                     // not able to truncate the log
@@ -438,7 +439,7 @@ public class Learner {
                         packetsCommitted.add(qp.getZxid());
                     }
                     break;
-                case Leader.UPTODATE:
+                case Leader.UPTODATE: // UPTODATE 指令，告诉Learner终止数据同步操作
                     if (isPreZAB1_0) {
                         zk.takeSnapshot();
                         self.setCurrentEpoch(newEpoch);
@@ -480,7 +481,7 @@ public class Learner {
         writePacket(ack, true);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
 
-
+        // 启动Learner服务器
         zk.startup();
         /*
          * Update the election vote here to ensure that all members of the

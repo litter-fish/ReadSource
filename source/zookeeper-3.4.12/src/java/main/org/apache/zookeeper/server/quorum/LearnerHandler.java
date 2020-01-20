@@ -464,7 +464,7 @@ public class LearnerHandler extends ZooKeeperThread {
                                      * 假设A、B、C三台服务器，开始Leader为B，Epoch为5，处理了0x500000001、0x500000002提案，并且已经提交给了Learner服务器
                                      * 一个新的提案0x500000003，Leader已经写入到Leader本地事务日志中，此时服务器B崩溃了，提案没被发送出去。
                                      *
-                                     * 接着A、C服务器进行选举，产生新的Leader A，Epoch为6，这时处理了0x600000001、0x600000002提案，这时服务器A启动了，需要与新的
+                                     * 接着A、C服务器进行选举，产生新的Leader A，Epoch为6，这时处理了0x600000001、0x600000002提案，这时服务器B启动了，需要与新的
                                      * Leader进行数据同步。
                                      *
                                      * 这时 peerLastZxid = 0x500000003，maxCommittedLog = 0x600000002，minCommittedLog = 0x500000001
